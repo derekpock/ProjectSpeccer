@@ -1,22 +1,30 @@
 import 'dart:html';
 import 'dart:convert';
+import 'dart:async';
+
+typedef void RequestResponseDelegate(Map<String, dynamic> data);
 
 class Request {
   static const _PORT = 58524;
+  static const _ADDRESS = "https://dlzpserver.noip.me";
+  static const _URL = "${_ADDRESS}:${_PORT}";
 
-//  static const _ADDRESS = "dlzpserver.noip.me";
-//  static const _URL = "https://${ADDRESS}:${PORT}/";
-  static const _ADDRESS = "localhost";
-  static const _URL = "http://${_ADDRESS}:${_PORT}/";
-  static const utf8Codec = Utf8Codec();
+  static Future<Map<String, dynamic>> makeRequest(
+      Map<String, dynamic> inputData) {
+    Completer<Map<String, dynamic>> completer = new Completer();
+    new Request(inputData, completer.complete);
+    return completer.future;
+  }
 
   HttpRequest _request;
   Map<String, dynamic> _data;
   Map<String, dynamic> _response;
+  RequestResponseDelegate _callback;
 
-  Request(Map<String, dynamic> data) {
+  Request(Map<String, dynamic> data, RequestResponseDelegate callback) {
     assert(data != null);
     _data = data;
+    _callback = callback;
 
     try {
       _request = new HttpRequest();
@@ -24,31 +32,30 @@ class Request {
       _request.onError.listen(_onError);
       _request.open("POST", _URL, async: true);
       _request.send(jsonEncode(_data));
-      print("sent: ${data}");
+      print("Sent $data to $_URL");
     } catch (e) {
-      print("exception during send: $e");
+      print("Exception during send operation: $e");
       _request = null;
     }
-  }
-
-  Map<String, dynamic> GetResponse() {
-    return _response;
   }
 
   void _onData(_) {
     bool requestReady =
         (_request != null && _request.readyState == HttpRequest.DONE);
     if (requestReady) {
-      if(_request.status == HttpStatus.ok) {
+      if (_request.status == HttpStatus.ok) {
         _response = jsonDecode(_request.response);
-        print("recieved: ${_response}");
+        print("Received: ${_response}");
+        if (_callback != null) {
+          _callback(_response);
+        }
       } else {
-        print("error received: ${_request.status}");
+        print("Error received: ${_request.status}");
       }
     }
   }
 
   void _onError(_) {
-    print("error mid-request: ${_request.readyState} ${_request.status}");
+    print("Error mid-request: ${_request.readyState} ${_request.status}");
   }
 }
