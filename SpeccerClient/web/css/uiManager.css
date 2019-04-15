@@ -1,0 +1,153 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    /*     color: #CCCCCC; */
+}
+
+select {
+    /*     background-color: #4f4f4f; */
+    /*     color: #CCCCCC; */
+    border: none;
+}
+
+select option:hover {
+    /*background-color: #49c4f4;*/
+}
+
+:focus {
+    outline: none;
+}
+
+*::selection {
+    /*     background-color: #49c4f4; */
+    /*     color: #2f2f2f; */
+}
+
+textarea,
+input:not([type="color"]):not([type="checkbox"]):not([type="range"]) {
+    /*     background-color: #4f4f4f; */
+    /*     color: #CCCCCC; */
+    /*     border: solid 2px #666666; */
+    /*border: solid 2px;*/
+}
+
+textarea:focus,
+input:not([type="color"]):not([type="checkbox"]):not([type="range"]):focus {
+    /*     border-color: #49c4f4; */
+}
+
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    /*     background-color: #666666; */
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    /*     background: #CCCCCC; */
+    width: 10px;
+    height: 20px;
+}
+
+input[type=range]::-webkit-slider-thumb:active,
+input[type=range]:active::-webkit-slider-thumb {
+    /*     background-color: #49c4f4; */
+}
+
+.NoSelect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+.Fill {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.Button {
+    text-align: center;
+    line-height: 27px;
+    display: inline-block;
+    padding: 0 10px;
+}
+
+.Button[toggleButton="selected"],
+.Button[selected="true"] {
+    /*background-color: #49c4f4;*/
+    /*color: #2f2f2f;*/
+    cursor: default;
+}
+
+.Button[toggleButton="selected"]:hover,
+.Button[selected="true"]:hover {
+    /*color: #2f2f2f;*/
+}
+
+.Button[toggleButton="selected"]:active,
+.Button[selected="true"]:active {
+    /*color: #2f2f2f;*/
+}
+
+.ErrorColor {
+    color: #AF3838 !important;
+}
+
+.Clickable {
+    cursor: pointer;
+    /*     color: #CCCCCC; */
+    /*     background-color: #4f4f4f; */
+    background-color: #CCCCCC;
+}
+
+.Clickable:hover {
+    /*color: #FFFFFF;*/
+    background-color: #DDDDDD;
+}
+
+.Clickable:active {
+    /*color: #AAAAAA;*/
+    background-color: #BBBBBB;
+}
+
+.Clickable[disabled="true"] {
+    /*color: #666666;*/
+    /*background-color: #4f4f4f;*/
+    cursor: default;
+}
+
+.Clickable[disabled="true"]:active {
+    /*color: #666666;*/
+}
+
+.Clickable[disabled="true"]:hover {
+    /*color: #666666;*/
+}
+
+#uiManager{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    /*background-color: #2F2F2F;*/
+}
