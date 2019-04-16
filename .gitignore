@@ -13,3 +13,6 @@ doc/api/
 # IDE
 .idea
 .vscode
+
+# Password configuration file
+SpeccerServer/bin/config.json
