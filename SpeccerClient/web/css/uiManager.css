@@ -130,17 +130,17 @@ input[type=range]:active::-webkit-slider-thumb {
 }
 
 .Clickable[disabled="true"] {
-    /*color: #666666;*/
-    /*background-color: #4f4f4f;*/
+    background-color: #CCCCCC;
+    color: #888888;
     cursor: default;
 }
 
 .Clickable[disabled="true"]:active {
-    /*color: #666666;*/
+    color: #888888;
 }
 
 .Clickable[disabled="true"]:hover {
-    /*color: #666666;*/
+    color: #888888;
 }
 
 #uiManager{
@@ -150,4 +150,25 @@ input[type=range]:active::-webkit-slider-thumb {
     width: 100%;
     height: 100%;
     /*background-color: #2F2F2F;*/
+}
+
+.uiPageHeader {
+
+}
+
+#topHeader {
+
+}
+
+.uiPageContent {
+
+}
+
+.topHeaderButton {
+
+}
+
+.form th,
+.form td {
+    padding: 2px 2px;
 }

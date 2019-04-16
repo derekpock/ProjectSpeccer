@@ -1,6 +1,6 @@
-import "dart/DBClient.dart";
-import "dart:html";
-import "dart/UIManager.dart";
+import 'dart/DBClient.dart';
+import 'dart:html';
+import 'dart/UIManager.dart';
 
 void main() {
   querySelector("#output").text += " Dart running.";

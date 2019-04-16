@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:math';
 import 'package:uuid/uuid.dart';
-import 'package:pedantic/pedantic.dart';
 import 'package:postgres/postgres.dart';
 import 'package:dbcrypt/dbcrypt.dart';
 
@@ -16,8 +15,28 @@ final uuidGen = new Uuid();
 final dbcrypt = new DBCrypt();
 final secureRandom = new Random.secure();
 
+String dbClientUsername;
+String dbClientPassword;
+
 void main(List<String> arguments) async {
   print("Server started at ${DateTime.now().toString()}");
+
+  File privateConfigFile = new File("config.json");
+  try {
+    Map<String, dynamic> config = jsonDecode(privateConfigFile.readAsStringSync());
+    dbClientUsername = config["dbClientUsername"];
+    dbClientPassword = config["dbClientPassword"];
+
+    if(dbClientUsername.isEmpty || dbClientPassword.isEmpty) {
+      print("Invalid configuration file: ${privateConfigFile.path}");
+      print("Aborting: One of the required configruation items is not available.");
+      exit(2);
+    }
+  } catch (e) {
+    print("Server unable to read config file: ${privateConfigFile.path}");
+    print("Aborting: Is ${Directory.current} the correct working directory?");
+    exit(1);
+  }
 
   List<InternetAddress> serverIps = await InternetAddress.lookup(HOST);
   print("Accepting connections from ${CROSS_ORIGIN_ACCESS} or any address from ${serverIps}.");
@@ -74,7 +93,10 @@ class Request {
         .then((_) => _parseClientInfo())
         .then((_) => _closeRequest())
         .catchError(_errorAttemptResponse)
-        .then((_) => _closeRequest());
+        .then((_) => _closeRequest())
+        .catchError((_) {
+          print("Error in attempt to respond after error. Hands are off.");
+    });
   }
 
   Future _closeRequest() {
@@ -125,7 +147,7 @@ class Request {
         case "adduser":
           f = _connectToDb()
               .then((_) => _generateNewUuid(1))
-              .then((String uuid) => _addUser(uuid, _inData["username"], _inData["password"]));
+              .then((String uuid) => _addUser(uuid, _inData["username"], _inData["password"], _inData["email"]));
           print("adduser ${_inData["username"]}");
           break;
         default:
@@ -144,8 +166,8 @@ class Request {
             "localhost",
             5432,
             "postgres",
-            username: "dlzp_client",
-            password: "temppass");
+            username: dbClientUsername,
+            password: dbClientPassword);
     return _db.open();
   }
 
@@ -156,7 +178,7 @@ class Request {
   Future<String> _generateNewUuid(int type) {
     String uuid = uuidGen.v4();
     return _db.query(
-        "INSERT INTO identifier VALUES ('@uuid', @type);",
+        "INSERT INTO public.identifier VALUES (@uuid , @type);",
         substitutionValues: {
           "uuid": uuid,
           "type": type
@@ -178,22 +200,27 @@ class Request {
     return sb.toString();
   }
 
-  Future _addUser(String uid, String username, String password) {
+  Future _addUser(String uid, String username, String password, String email) {
     if(password.length < 8) {
       return Future.error("Password not long enough.");
     } else {
       String salt = _generateSalt();
       String hash = dbcrypt.hashpw(password + salt, dbcrypt.gensalt());
       return _db.query(
-          "INSERT INTO users VALUES (@uid, @name, @passhash @date_join @salt",
+          "INSERT INTO public.user VALUES (@uid, @name, @passhash, @date_join, @salt, @email)",
           substitutionValues: {
             "uid": uid,
             "name": username,
             "passhash": hash,
             "date_join": DateTime.now().toIso8601String(),
-            "salt": salt
+            "salt": salt,
+            "email": email
           }).then((_) => _outData["uid"] = uid);
     }
+  }
+
+  Future _authenticateUser(String username, String password) {
+//    _db.query("SELECT salt, passhash FROM users WHERE name = ")
   }
   
 //  Future _queryDb(String query) {

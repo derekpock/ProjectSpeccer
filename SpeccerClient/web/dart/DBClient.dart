@@ -50,7 +50,7 @@ class Request {
           _callback(_response);
         }
       } else {
-        print("Error received: ${_request.status}");
+        print("Error received: ${_request.status} with ${_request.response}");
       }
     }
   }

@@ -1,27 +1,42 @@
-import "dart:html";
+import 'dart:html';
+import 'CSSClasses.dart';
+import 'UIManagerInteractionInterface.dart';
+import 'UIPage.dart';
 
-class UIManager {
+class UIManager implements UIManagerInteractionInterface {
 
-  static const pHome = "pHome";
-  static const pLogin = "pLogin";
-  static const pBrowse = "pBrowse";
-  static const pProject = "pProject";
+  List<UIPage> _pages;
 
-  DivElement divUIManager;
+  DivElement _divUIManager;
+  DivElement _divHeader;
 
-  UIManager() :
-        divUIManager = document.getElementById("uiManager") {
-    document.getElementById("bHome").onClick.listen((_) => setActivePage(pHome));
-    document.getElementById("bLogin").onClick.listen((_) => setActivePage(pLogin));
-    setActivePage(pHome);
+  UIManager() {
+    _divUIManager = document.getElementById("uiManager");
+
+    _divHeader = new DivElement();
+    _divHeader.id = "topHeader";
+
+    _pages = new List();
+    _pages.add(new PageHome(this));
+    _pages.add(new PageLogin(this));
+    _pages.add(new PageRegister(this));
+
+    _divUIManager.append(_divHeader);
+
+    _pages.forEach((UIPage page) {
+      _divUIManager.append(page.getElement());
+      _divHeader.append(
+          page.getTopHeaderButton()
+            ..onClick.listen((_) => setActivePage(page))
+      );
+    });
   }
 
-  void setActivePage(String id) {
-    divUIManager.childNodes.forEach((Node div) {
-      if( div is DivElement &&
-          div.classes.contains("uiPage") &&
-          (div.id == id) == (div.classes.contains("Hidden"))) {
-        div.classes.toggle("Hidden");
+  void setActivePage(UIPage activePage) {
+    _pages.forEach((UIPage page) {
+      if(page.hidden == (page == activePage)) {
+        page.getElement().classes.toggle(CSSClasses.hidden);
+        page.hidden = !page.hidden;
       }
     });
   }

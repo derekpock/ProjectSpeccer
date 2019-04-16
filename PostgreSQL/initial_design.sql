@@ -161,47 +161,12 @@ CREATE TABLE public."user" (
     name character varying(50) NOT NULL,
     passhash character(60) NOT NULL,
     date_join timestamp with time zone NOT NULL,
-    salt character(8) NOT NULL
+    salt character(8) NOT NULL,
+    email text
 );
 
 
 ALTER TABLE public."user" OWNER TO postgres;
-
---
--- Data for Name: comment; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-
-
---
--- Data for Name: component; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-
-
---
--- Data for Name: identifier; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-
-
---
--- Data for Name: project; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-
-
---
--- Data for Name: role; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-
-
---
--- Data for Name: user; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-
 
 --
 -- Name: comment comment_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
