@@ -48,7 +48,9 @@ class PageRegister extends UIPage {
           "password": _password1.value,
           "email": _email.value
         }, (Map<String, dynamic> data) {
-
+          if(data.containsKey("error_object")) {
+//            if(data["error_code"] == )
+          }
         });
       }
     });

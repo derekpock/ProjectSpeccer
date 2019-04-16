@@ -94,8 +94,8 @@ class Request {
         .then((_) => _closeRequest())
         .catchError(_errorAttemptResponse)
         .then((_) => _closeRequest())
-        .catchError((_) {
-          print("Error in attempt to respond after error. Hands are off.");
+        .catchError((e) {
+          print("Error in attempt to respond after error. Hands are off: $e");
     });
   }
 
@@ -114,7 +114,22 @@ class Request {
 
   void _errorAttemptResponse(Object e) {
     try {
-      _outData["error_object"] = e;
+      if(e is PostgreSQLException) {
+        _outData["error_code"] = e.code;
+//        _outData["columnName"] = e.columnName;
+        _outData["constraintName"] = e.constraintName;
+//        _outData["dataTypeName"] = e.dataTypeName;
+        _outData["detail"] = e.detail;
+//        _outData["fileName"] = e.fileName;
+//        _outData["hint"] = e.hint;
+//        _outData["message"] = e.message;
+//        _outData["routineName"] = e.routineName;
+//        _outData["schemaName"] = e.schemaName;
+        _outData["tableName"] = e.tableName;
+//        _outData["trace"] = e.trace;
+      } else {
+        _outData["error_object"] = e.toString();
+      }
       _response
         ..statusCode = (_response.statusCode == HttpStatus.ok ? HttpStatus.internalServerError : _response.statusCode)
         ..write(_outData);
