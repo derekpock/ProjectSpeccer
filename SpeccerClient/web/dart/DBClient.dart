@@ -33,6 +33,14 @@ class DBClient {
 
     Request.makeRequest(data).then(_dataFromServer);
   }
+
+  void createProject(String username, String password, bool isPublic) {
+    var data = _createUserAuthData(RequestCodes.createProject, username, password);
+    data[DataElements.isPublic] = isPublic;
+
+    Request.makeRequest(data).then(_dataFromServer);
+  }
+
   void _dataFromServer(Map<String, dynamic> data) {
     switch(data[DataElements.cmd]) {
       case RequestCodes.ping:

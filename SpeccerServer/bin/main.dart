@@ -190,6 +190,17 @@ class Request {
               .then((String uuid) => _addUser(uuid, inData[DataElements.username], inData[DataElements.password], inData[DataElements.email]));
           print("adduser ${inData[DataElements.username]}");
           break;
+
+        case RequestCodes.createProject:
+          f = _connectToDb()
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) => [uid, _generateNewUuid(2)])
+              .then((List<Object> args) => _createProject(args[1], args[0], inData[DataElements.isPublic]))
+              .then((String pid) {
+                _outData[DataElements.pid] = pid;
+              });
+          break;
+
         default:
           _response.statusCode = HttpStatus.notAcceptable;
           _outData[ERROR_CODE] = ErrorCodes.UnknownRequestCode;
@@ -325,15 +336,43 @@ class Request {
           }
         });
   }
-  
-//  Future _queryDb(String query) {
-//    return _db.query(query).then((List<List<dynamic>> results) {
-//      print(results);
-//      _outData["queryResult"] = results;
-//    });
-//      //      "SELECT numofpoints FROM test_table WHERE id = @id",
-//      //      substitutionValues: {"id": 3});
-//  }
+
+  Future<String> _createProject(String pid, String uid, bool public) {
+    return Future(
+            () =>
+                _db.query(
+                    "INSERT INTO public.project VALUES (@pid, @public, @date)",
+                    substitutionValues: {
+                      "pid": pid,
+                      "public": public,
+                      "date": DateTime.now().toIso8601String()
+                    }
+                ).catchError((e) {
+                  if(e is PostgreSQLException) {
+                    _markOut500Error(ErrorCodes.ProjectCreationFailure);
+                  }
+                  throw e;
+                })
+    ).then(
+            (_) =>
+                _db.query(
+                    "INSERT INTO public.role VALUES (@uid, @pid, @is_owner, @is_developer)",
+                    substitutionValues: {
+                      "uid": uid,
+                      "pid": pid,
+                      "is_owner": true,
+                      "is_developer": true
+                    })
+                .catchError((e) {
+                  if(e is PostgreSQLException) {
+                    if(e.columnName == "uid") {
+                      _markOut200Error(ErrorCodes.InvalidUid);
+                    }
+                  }
+                  throw e;
+                })
+    ).then((_) => pid);
+  }
 }
 
 
