@@ -19,6 +19,7 @@ final secureRandom = new Random.secure();
 
 String dbClientUsername;
 String dbClientPassword;
+String coaop; // crossOriginAccessOverridePassword
 
 void main(List<String> arguments) async {
   print("Server started at ${DateTime.now().toString()}");
@@ -28,6 +29,7 @@ void main(List<String> arguments) async {
     Map<String, dynamic> config = jsonDecode(privateConfigFile.readAsStringSync());
     dbClientUsername = config["dbClientUsername"];
     dbClientPassword = config["dbClientPassword"];
+    coaop = config["crossOriginAccessOverridePassword"];
 
     if(dbClientUsername.isEmpty || dbClientPassword.isEmpty) {
       print("Invalid configuration file: ${privateConfigFile.path}");
@@ -57,7 +59,8 @@ void main(List<String> arguments) async {
 
     // Set cross origin access.
     // Only requests from our host or from our address are allowed.
-    if (serverIps.contains(request.connectionInfo.remoteAddress)) {
+    if (serverIps.contains(request.connectionInfo.remoteAddress) ||
+        request.headers.value("coaop") == coaop) {
       response.headers.add("Access-Control-Allow-Origin", request.headers.value("origin"));
     } else {
       response.headers.add("Access-Control-Allow-Origin", CROSS_ORIGIN_ACCESS);
