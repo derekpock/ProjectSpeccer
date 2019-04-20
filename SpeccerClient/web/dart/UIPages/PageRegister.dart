@@ -43,7 +43,7 @@ class PageRegister extends UIPage {
 
       if(enabled) {
         new Request({
-          "~": "adduser",
+          "~": "addUser",
           "username": _username.value,
           "password": _password1.value,
           "email": _email.value

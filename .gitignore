@@ -16,3 +16,6 @@ doc/api/
 
 # Password configuration file
 SpeccerServer/bin/config.json
+SpeccerClient/syncSharesFromHere\.bat
+
+SpeccerServer/syncSharesFromHere\.bat

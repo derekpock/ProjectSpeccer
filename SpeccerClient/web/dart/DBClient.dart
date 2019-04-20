@@ -1,8 +1,56 @@
 import 'dart:html';
 import 'dart:convert';
 import 'dart:async';
+import 'SharedStatics.dart';
 
 typedef void RequestResponseDelegate(Map<String, dynamic> data);
+
+class DBClient {
+  DBClient() {
+
+  }
+
+  static Map<String, dynamic> _createEmptyData(String cmd) {
+    Map<String, dynamic> data = new Map<String, dynamic>();
+    data[DataElements.cmd] = cmd;
+    return data;
+  }
+
+  static Map<String, dynamic> _createUserAuthData(String cmd, String username, String password) {
+    var data = _createEmptyData(cmd);
+    data[DataElements.username] = username;
+    data[DataElements.password] = password;
+    return data;
+  }
+
+  void ping() {
+    Request.makeRequest(_createEmptyData(RequestCodes.ping)).then(_dataFromServer);
+  }
+
+  void addUser(String username, String password, String email) {
+    var data = _createUserAuthData(RequestCodes.addUser, username, password);
+    data[DataElements.email] = email;
+
+    Request.makeRequest(data).then(_dataFromServer);
+  }
+  void _dataFromServer(Map<String, dynamic> data) {
+    switch(data[DataElements.cmd]) {
+      case RequestCodes.ping:
+      case RequestCodes.pong:
+        querySelector("#output").text += " Response '${data[DataElements.cmd]}' received from server.";
+        break;
+      case RequestCodes.addUser:
+
+        break;
+      case RequestCodes.createProject:
+
+        break;
+      default:
+        print("Unknown request command response from server: '${data[DataElements.cmd]}'");
+        break;
+    }
+  }
+}
 
 class Request {
   static const _PORT = 58524;

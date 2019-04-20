@@ -6,6 +6,8 @@ import 'package:uuid/uuid.dart';
 import 'package:postgres/postgres.dart';
 import 'package:dbcrypt/dbcrypt.dart';
 
+import 'SharedStatics.dart';
+
 const PORT = 58524;
 const HOST = "dlzpserver.noip.me";
 const CROSS_ORIGIN_ACCESS = "https://dlzpserver.noip.me";
@@ -61,6 +63,11 @@ void main(List<String> arguments) async {
       response.headers.add("Access-Control-Allow-Origin", CROSS_ORIGIN_ACCESS);
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Starting here, user communication may be invalid.
+    // We may return 500 or 400 errors.
+    ////////////////////////////////////////////////////////////////////////////
+
     if (setRequest) {
       // Parse a request from the client.
       new Request(request);
@@ -71,8 +78,9 @@ void main(List<String> arguments) async {
           ..statusCode = HttpStatus.methodNotAllowed
           ..write("");
       } catch (e3) {}
-      print("Unsupported request: ${request.method} ${contentType?.mimeType}.");
+      print("Unsupported request: ${request.method}.");
     }
+    print("Waiting for next request...");
   }
 }
 
@@ -80,7 +88,6 @@ class Request {
 
   HttpRequest _request;
   HttpResponse _response;
-  Map<String, dynamic> _inData;
   Map<String, dynamic> _outData;
   PostgreSQLConnection _db;
 
@@ -89,14 +96,14 @@ class Request {
     _response = request.response;
     _outData = new Map<String, dynamic>();
     _getClientDataString()
-        .then((String stringData) => _inData = new Map<String, dynamic>.from(jsonDecode(stringData)))
-        .then((_) => _parseClientInfo())
+        .then((String stringData) => Map<String, dynamic>.from(jsonDecode(stringData)))
+        .then((Map<String, dynamic> inData) => _parseClientInfo(inData))
         .then((_) => _closeRequest())
         .catchError(_errorAttemptResponse)
         .then((_) => _closeRequest())
         .catchError((e) {
           print("Error in attempt to respond after error. Hands are off: $e");
-    });
+        });
   }
 
   Future _closeRequest() {
@@ -107,72 +114,112 @@ class Request {
         .then((_) => _response.close())
         .then((_) => _db?.close())
         .then((_) {
-      _inData = null;
-      _outData = null;
-    }).catchError((_){});
+          _outData = null;
+        }).catchError((_){});
   }
 
   void _errorAttemptResponse(Object e) {
     try {
       if(e is PostgreSQLException) {
-        _outData["error_code"] = e.code;
 //        _outData["columnName"] = e.columnName;
-        _outData["constraintName"] = e.constraintName;
 //        _outData["dataTypeName"] = e.dataTypeName;
-        _outData["detail"] = e.detail;
 //        _outData["fileName"] = e.fileName;
 //        _outData["hint"] = e.hint;
 //        _outData["message"] = e.message;
 //        _outData["routineName"] = e.routineName;
 //        _outData["schemaName"] = e.schemaName;
-        _outData["tableName"] = e.tableName;
 //        _outData["trace"] = e.trace;
+        _outData[DataElements.postgres_error] = true;
+        _outData[DataElements.postgres_code] = e.code;
+        _outData[DataElements.postgres_constraintName] = e.constraintName;
+        _outData[DataElements.postgres_detail] = e.detail.replaceAll("\"", "'");
+        _outData[DataElements.postgres_tableName] = e.tableName;
+
+        if(!_outData.containsKey(ERROR_CODE)) {
+          // If we haven't defined the error code, we don't know the error.
+          _outData[ERROR_CODE] = ErrorCodes.UnknownPostgresError;
+
+          // Mark this as not implemented, because we need to implement handling
+          // this error, even if its a simple error code set.
+          _response.statusCode = HttpStatus.notImplemented;
+        }
       } else {
-        _outData["error_object"] = e.toString();
+        if(!_outData.containsKey(ERROR_CODE)) {
+          // If we haven't defined the error code, we don't know the error.
+          _outData[ERROR_CODE] = ErrorCodes.UnknownError;
+
+          // Mark this as not implemented, because we need to implement handling
+          // this error, even if its a simple error code set.
+          _response.statusCode = HttpStatus.notImplemented;
+        }
       }
-      _response
-        ..statusCode = (_response.statusCode == HttpStatus.ok ? HttpStatus.internalServerError : _response.statusCode)
-        ..write(_outData);
+      _outData[DataElements.error_object] = e.toString();
+      _response.write(_outData);
     } catch (e2) {}
-    print("Error occurred - attempting response with: $e");
+    print("Error occurred - attempting response with: $_outData");
   }
 
   Future<String> _getClientDataString() {
     return _request.transform(utf8Codec.decoder).join().catchError((e) {
+      _outData[ERROR_CODE] = ErrorCodes.InvalidRequestFormat;
+      _response.statusCode = HttpStatus.preconditionFailed;
       return Future.error("Error joining client data");
     });
   }
 
-  Future _parseClientInfo() {
+  Future _parseClientInfo(Map<String, dynamic> inData) {
     Future f = new Future((){});
-    if (_inData.containsKey("~")) {
+    if (inData.containsKey(DataElements.cmd)) {
       _response.statusCode = HttpStatus.ok;
-      _outData["~"] = _inData["~"];
+      _outData[DataElements.cmd] = inData[DataElements.cmd];
 
-      switch (_inData["~"]) {
-        case "ping":
-          _outData["~"] = "pong";
+      // Within each case (non-default), only return 200 with error information.
+      switch (inData[DataElements.cmd]) {
+
+        case RequestCodes.ping:
+          _outData[DataElements.cmd] = "pong";
           print("pong");
           break;
-//        case "dbquery":
-//          f = _connectToDb()
-//              .then((_) => _queryDb(_inData["query"]));
-//          print("dbquery");
-//          break;
-        case "adduser":
+
+        case RequestCodes.addUser:
           f = _connectToDb()
               .then((_) => _generateNewUuid(1))
-              .then((String uuid) => _addUser(uuid, _inData["username"], _inData["password"], _inData["email"]));
-          print("adduser ${_inData["username"]}");
+              .then((String uuid) => _addUser(uuid, inData[DataElements.username], inData[DataElements.password], inData[DataElements.email]));
+          print("adduser ${inData[DataElements.username]}");
           break;
         default:
           _response.statusCode = HttpStatus.notAcceptable;
-          print("invalid data received: '${_inData["~"]}'");
+          _outData[ERROR_CODE] = ErrorCodes.UnknownRequestCode;
+          print("Invalid request code received: '${inData[DataElements.cmd]}'");
       }
     } else {
       _response.statusCode = HttpStatus.notAcceptable;
+      _outData[ERROR_CODE] = ErrorCodes.InvalidRequest;
     }
     return f;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Beyond this point, each of these functions are used within valid cases.
+  //
+  // Only return 500 level errors for real server issues, such as unable to
+  // connect to the database or other _unexpected_ exceptions.
+  //
+  // Otherwise, return 200 level and provide any errors using internally
+  // managed [ErrorCodes]. We don't want to throw red errors to the browser
+  // if the user forgets their password, etc.
+  //
+  // Must put an error code into [_outData] via ERROR_CODE if we expect and know
+  // the error, otherwise it will throw a notImplemented error.
+  //////////////////////////////////////////////////////////////////////////////
+
+  void _markOut200Error(String code) {
+    _outData[ERROR_CODE] = code;
+  }
+
+  void _markOut500Error(String code) {
+    _outData[ERROR_CODE] = code;
+    _response.statusCode = HttpStatus.internalServerError;
   }
 
   Future _connectToDb() {
@@ -183,12 +230,14 @@ class Request {
             "postgres",
             username: dbClientUsername,
             password: dbClientPassword);
-    return _db.open();
+    return _db.open().catchError((e) {
+      if(e is PostgreSQLException) {
+        _outData[ERROR_CODE] = ErrorCodes.DBAuthFailure;
+        _response.statusCode = HttpStatus.serviceUnavailable;
+      }
+      return Future.error(e);
+    });
   }
-
-
-
-
 
   Future<String> _generateNewUuid(int type) {
     String uuid = uuidGen.v4();
@@ -198,8 +247,13 @@ class Request {
           "uuid": uuid,
           "type": type
         }).then((_) {
-      return uuid;
-    });
+          return uuid;
+        }).catchError((e) {
+          if(e is PostgreSQLException) {
+            _markOut500Error(ErrorCodes.UuidGenerationFailure);
+          }
+          throw e;
+        });
   }
 
   String _generateSalt() {
@@ -207,16 +261,12 @@ class Request {
     for(int i = 0; i < 8; i++) {
       sb.writeCharCode(secureRandom.nextInt(255));
     }
-
-    if(sb.length != 8) {
-      print("Error! Generated salt has an invalid length!");
-    }
-
     return sb.toString();
   }
 
   Future _addUser(String uid, String username, String password, String email) {
     if(password.length < 8) {
+      _outData[ERROR_CODE] = ErrorCodes.InvalidNewPassword;
       return Future.error("Password not long enough.");
     } else {
       String salt = _generateSalt();
@@ -230,12 +280,47 @@ class Request {
             "date_join": DateTime.now().toIso8601String(),
             "salt": salt,
             "email": email
-          }).then((_) => _outData["uid"] = uid);
+          }).then((_) => _outData["uid"] = uid)
+          .catchError((e) {
+            if(e is PostgreSQLException) {
+              if(e.constraintName == "user_name_key") {
+                _markOut200Error(ErrorCodes.UsernameTaken);
+              }
+            }
+            throw e;
+          });
     }
   }
 
-  Future _authenticateUser(String username, String password) {
-//    _db.query("SELECT salt, passhash FROM users WHERE name = ")
+  Future<String> _authenticateUser(String username, String password) {
+    return _db.query(
+        "SELECT salt, passhash, uid FROM users WHERE name = @username",
+        substitutionValues: {
+          "username": username
+        }).then((List<List<dynamic>> query) {
+          if(query.length > 1) {
+            _markOut500Error(ErrorCodes.MultipleUsersFound);
+            throw "Multiple query items received from auth.";
+          } else if (query.isEmpty) {
+            _markOut200Error(ErrorCodes.WrongUsername);
+            throw "Wrong username.";
+          } else {
+            if(query.first.length != 3) {
+              _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
+              throw "Needed 3 items from from db in auth!";
+            } else {
+              String salt = query.first[0];
+              String passhash = query.first[1];
+              String uid = query.first[2];
+              if(!dbcrypt.checkpw(password + salt, passhash)) {
+                _markOut200Error(ErrorCodes.WrongPassword);
+                throw "Wrong password.";
+              } else {
+                return uid;
+              }
+            }
+          }
+        });
   }
   
 //  Future _queryDb(String query) {
