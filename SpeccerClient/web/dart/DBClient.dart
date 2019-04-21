@@ -2,6 +2,7 @@ import 'dart:html';
 import 'dart:convert';
 import 'dart:async';
 import 'SharedStatics.dart';
+import 'config.dart';
 
 typedef void RequestResponseDelegate(Map<String, dynamic> data);
 
@@ -81,6 +82,8 @@ class Request {
     assert(data != null);
     _data = data;
     _callback = callback;
+
+    data["coaop"] = coaop;
 
     try {
       _request = new HttpRequest();

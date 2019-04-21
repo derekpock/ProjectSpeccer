@@ -53,17 +53,19 @@ void main(List<String> arguments) async {
 
   await for (HttpRequest request in server) {
     // Get request information.
-    ContentType contentType = request.headers.contentType;
     HttpResponse response = request.response;
     bool setRequest = request.method == "POST";
 
     // Set cross origin access.
     // Only requests from our host or from our address are allowed.
-    if (serverIps.contains(request.connectionInfo.remoteAddress) ||
-        request.headers.value("coaop") == coaop) {
-      response.headers.add("Access-Control-Allow-Origin", request.headers.value("origin"));
+    //
+    // There's another backdoor where if the data contains a "coaop" element
+    // with a correct password (found in config.json), then it will also be
+    // cross origin allowed.
+    if (serverIps.contains(request.connectionInfo.remoteAddress)) {
+      response.headers.set("Access-Control-Allow-Origin", request.headers.value("origin"));
     } else {
-      response.headers.add("Access-Control-Allow-Origin", CROSS_ORIGIN_ACCESS);
+      response.headers.set("Access-Control-Allow-Origin", CROSS_ORIGIN_ACCESS);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -172,7 +174,14 @@ class Request {
 
   Future _parseClientInfo(Map<String, dynamic> inData) {
     Future f = new Future((){});
-    if (inData.containsKey(DataElements.cmd)) {
+
+    // Check our development backdoor.
+    // Client must provide the correct password for this to work.
+    if(coaop != null && inData["coaop"] == coaop) {
+      _response.headers.set("Access-Control-Allow-Origin", _request.headers.value("origin"));
+    }
+
+    if(inData.containsKey(DataElements.cmd)) {
       _response.statusCode = HttpStatus.ok;
       _outData[DataElements.cmd] = inData[DataElements.cmd];
 
