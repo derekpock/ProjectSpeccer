@@ -16,6 +16,8 @@ doc/api/
 
 # Password configuration file
 SpeccerServer/bin/config.json
-SpeccerClient/syncSharesFromHere\.bat
+SpeccerClient/web/dart/config.dart
 
+# Local syncronization files aren't necessary
+SpeccerClient/syncSharesFromHere\.bat
 SpeccerServer/syncSharesFromHere\.bat
