@@ -8,14 +8,17 @@ class PageRegister extends UIPage {
   PasswordInputElement _password1;
   PasswordInputElement _password2;
 
-  bool _passwordsValid;
+  bool _passwordsValid = false;
   DivElement _submit;
+
+  int _invalidPassFromServer = 0;
+  int _invalidUserFromServer = 0;
 
   PageRegister(UIManagerInteractionInterface uimii) :
         super(uimii, true, "Register") {
 
     _username = new TextInputElement();
-    _username.onInput.listen(_updateSubmitButton);
+    _username.onInput.listen(_usernameOnInput);
     _username.required = true;
 
     _email = new EmailInputElement();
@@ -37,21 +40,10 @@ class PageRegister extends UIPage {
       bool enabled =
           _username.checkValidity() &&
           _email.checkValidity() &&
-          _password1.checkValidity() &&
-          _password2.checkValidity() &&
           _passwordsValid;
 
       if(enabled) {
-        new Request({
-          "~": "addUser",
-          "username": _username.value,
-          "password": _password1.value,
-          "email": _email.value
-        }, (Map<String, dynamic> data) {
-          if(data.containsKey("error_object")) {
-//            if(data["error_code"] == )
-          }
-        });
+        _uimii.getDBClient().makeRequest(new RequestAddUser(_username.value, _password1.value, _email.value));
       }
     });
 
@@ -68,22 +60,58 @@ class PageRegister extends UIPage {
       ..colSpan = 2
       ..style.textAlign = "center";
 
+    _updateSubmitButton(null);
+
     _content.append(_form.getElement());
   }
 
   void _passwordOnInput(_) {
-    _passwordsValid = _password1.value == _password2.value;
+    if(_invalidPassFromServer > 0) {
+      _invalidPassFromServer--;
+    }
+
+    _passwordsValid =
+        _password1.value == _password2.value &&
+        _password1.checkValidity() &&
+        _password2.checkValidity() &&
+        _invalidPassFromServer == 0;
+    _password1.setAttribute("error", _passwordsValid ? "false" : "true");
+    _password2.setAttribute("error", _passwordsValid ? "false" : "true");
     _updateSubmitButton(_);
   }
-  
+
+  void _usernameOnInput(_) {
+    if(_invalidUserFromServer > 0) {
+      _invalidUserFromServer--;
+    }
+
+    _username.setAttribute("error", _invalidUserFromServer > 0 ? "true" : "false");
+    _updateSubmitButton(_);
+  }
+
   void _updateSubmitButton(_) {
     bool enabled =
         _username.checkValidity() &&
         _email.checkValidity() &&
-        _password1.checkValidity() &&
-        _password2.checkValidity() &&
         _passwordsValid;
 
     _submit.setAttribute("disabled", (enabled ? "false" : "true"));
+  }
+
+  void invalidPassword() {
+    _invalidPassFromServer = 2;
+    _passwordOnInput(null);
+  }
+
+  void usernameTaken() {
+    _invalidUserFromServer = 2;
+    _usernameOnInput(null);
+  }
+
+  void reset() {
+    _username.value = "";
+    _password1.value = "";
+    _password2.value = "";
+    _email.value = "";
   }
 }

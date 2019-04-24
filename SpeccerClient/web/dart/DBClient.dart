@@ -1,120 +1,77 @@
 import 'dart:html';
-import 'dart:convert';
-import 'dart:async';
+import 'AbstractRequest.dart';
 import 'SharedStatics.dart';
+import 'UIManagerInteractionInterface.dart';
 import 'config.dart';
-
-typedef void RequestResponseDelegate(Map<String, dynamic> data);
+import 'JsonHttpRequest.dart';
 
 class DBClient {
-  DBClient() {
+  UIManagerInteractionInterface _uimii;
+  DBClient();
 
+  void setUimii(UIManagerInteractionInterface uimii) {
+    _uimii = uimii;
   }
 
-  static Map<String, dynamic> _createEmptyData(String cmd) {
-    Map<String, dynamic> data = new Map<String, dynamic>();
-    data[DataElements.cmd] = cmd;
-    return data;
+  void makeRequest(AbstractRequest request) {
+    request.outData["coaop"] = coaop;
+    JsonHttpRequest
+        .makeRequest(request.outData)
+        .then((inData) {
+          String apiErrorCode = inData[ERROR_CODE];
+          int httpErrorCode = inData[JsonHttpRequest.jsonHttpRequestStatus];
+
+          switch(httpErrorCode) {
+            case HttpStatus.ok:
+              request.dataReceived(inData, _uimii);
+              break;
+
+            case HttpStatus.methodNotAllowed:
+              throw "Invalid request sent to server: $apiErrorCode";
+              break;
+            case HttpStatus.notImplemented:
+              throw "An operation exception on server has not yet been implemented: $apiErrorCode";
+              break;
+            case HttpStatus.preconditionFailed:
+              throw "Request was ill-formatted: $apiErrorCode";
+              break;
+            case HttpStatus.notFound:
+              throw "The send request command has not yet been implemented on the server: $apiErrorCode";
+              break;
+            case HttpStatus.notAcceptable:
+              throw "The send request did not include a request command: $apiErrorCode";
+              break;
+            case HttpStatus.internalServerError:
+              throw "An internal server error occurred: $apiErrorCode";
+              break;
+            case HttpStatus.serviceUnavailable:
+              throw "Server unable to contact database: $apiErrorCode";
+              break;
+            default:
+              throw "Unknown http error code ($httpErrorCode) from server (dev should probably address this code): $apiErrorCode";
+              break;
+          }
+        })
+        .catchError((Object error) {
+          throw "An error occurred when making a request to the server. Details below:\n${error}";
+        });
   }
 
-  static Map<String, dynamic> _createUserAuthData(String cmd, String username, String password) {
-    var data = _createEmptyData(cmd);
-    data[DataElements.username] = username;
-    data[DataElements.password] = password;
-    return data;
-  }
-
-  void ping() {
-    Request.makeRequest(_createEmptyData(RequestCodes.ping)).then(_dataFromServer);
-  }
-
-  void addUser(String username, String password, String email) {
-    var data = _createUserAuthData(RequestCodes.addUser, username, password);
-    data[DataElements.email] = email;
-
-    Request.makeRequest(data).then(_dataFromServer);
-  }
-
-  void createProject(String username, String password, bool isPublic) {
-    var data = _createUserAuthData(RequestCodes.createProject, username, password);
-    data[DataElements.isPublic] = isPublic;
-
-    Request.makeRequest(data).then(_dataFromServer);
-  }
-
-  void _dataFromServer(Map<String, dynamic> data) {
-    switch(data[DataElements.cmd]) {
-      case RequestCodes.ping:
-      case RequestCodes.pong:
-        querySelector("#output").text += " Response '${data[DataElements.cmd]}' received from server.";
-        break;
-      case RequestCodes.addUser:
-
-        break;
-      case RequestCodes.createProject:
-
-        break;
-      default:
-        print("Unknown request command response from server: '${data[DataElements.cmd]}'");
-        break;
-    }
-  }
-}
-
-class Request {
-  static const _PORT = 58524;
-  static const _ADDRESS = "https://dlzpserver.noip.me";
-  static const _URL = "${_ADDRESS}:${_PORT}";
-
-  static Future<Map<String, dynamic>> makeRequest(
-      Map<String, dynamic> inputData) {
-    Completer<Map<String, dynamic>> completer = new Completer();
-    new Request(inputData, completer.complete);
-    return completer.future;
-  }
-
-  HttpRequest _request;
-  Map<String, dynamic> _data;
-  Map<String, dynamic> _response;
-  RequestResponseDelegate _callback;
-
-  Request(Map<String, dynamic> data, RequestResponseDelegate callback) {
-    assert(data != null);
-    _data = data;
-    _callback = callback;
-
-    data["coaop"] = coaop;
-
-    try {
-      _request = new HttpRequest();
-      _request.onReadyStateChange.listen(_onData);
-      _request.onError.listen(_onError);
-      _request.open("POST", _URL, async: true);
-      _request.send(jsonEncode(_data));
-      print("Sent $data to $_URL");
-    } catch (e) {
-      print("Exception during send operation: $e");
-      _request = null;
-    }
-  }
-
-  void _onData(_) {
-    bool requestReady =
-        (_request != null && _request.readyState == HttpRequest.DONE);
-    if (requestReady) {
-      if (_request.status == HttpStatus.ok) {
-        _response = jsonDecode(_request.response);
-        print("Received: ${_response}");
-        if (_callback != null) {
-          _callback(_response);
-        }
-      } else {
-        print("Error received: ${_request.status} with ${_request.response}");
-      }
-    }
-  }
-
-  void _onError(_) {
-    print("Error mid-request: ${_request.readyState} ${_request.status}");
-  }
+//  void addUser(String username, String password, String email) {
+//    var data = _createUserAuthData(RequestCodes.addUser, username, password);
+//    data[DataElements.email] = email;
+//
+//    JsonHttpRequest.makeRequest(data).then(_dataFromServer);
+//  }
+//
+//  void login(String username, String password) {
+//    JsonHttpRequest.makeRequest(_createUserAuthData(RequestCodes.auth, username, password)).then(_dataFromServer);
+//  }
+//
+//  void createProject(String username, String password, bool isPublic) {
+//    var data = _createUserAuthData(RequestCodes.createProject, username, password);
+//    data[DataElements.isPublic] = isPublic;
+//
+//    JsonHttpRequest.makeRequest(data).then(_dataFromServer);
+//  }
 }

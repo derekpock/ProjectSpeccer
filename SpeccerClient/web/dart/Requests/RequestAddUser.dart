@@ -1,0 +1,36 @@
+
+import '../AbstractRequest.dart';
+import '../SharedStatics.dart';
+import '../UIManagerInteractionInterface.dart';
+import 'dart:html';
+
+
+class RequestAddUser extends AbstractRequest {
+  String _username;
+  String _password;
+
+  RequestAddUser(String username, String password, String email) :
+        _username = username,
+        _password = password,
+        super(RequestCodes.addUser) {
+    addUserAuthData(username, password);
+    outData[DataElements.email] = email;
+  }
+
+  @override
+  void dataReceived(Map<String, dynamic> data, UIManagerInteractionInterface uimii) {
+    switch(data[ERROR_CODE]) {
+      case ErrorCodes.SoFarSoGood:
+        uimii.userLoggedIn(_username, _password);
+        break;
+      case ErrorCodes.InvalidNewPassword:
+        uimii.newPasswordInvalid();
+        break;
+      case ErrorCodes.UsernameTaken:
+        uimii.usernameTaken();
+        break;
+      default:
+        throw "Error pinging server: ${data[ERROR_CODE]}";
+    }
+  }
+}

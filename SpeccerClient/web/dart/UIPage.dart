@@ -4,10 +4,12 @@ import 'dart:html';
 import 'CSSClasses.dart';
 import 'UIManagerInteractionInterface.dart';
 import 'DesignElements/Form.dart';
-import 'DBClient.dart';
+import 'Requests/RequestAddUser.dart';
+import 'Requests/RequestLogin.dart';
 
 part 'UIPages/PageHome.dart';
 part 'UIPages/PageLogin.dart';
+part 'UIPages/PageLogout.dart';
 part 'UIPages/PageRegister.dart';
 
 class UIPage {

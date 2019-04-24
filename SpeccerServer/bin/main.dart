@@ -29,7 +29,10 @@ void main(List<String> arguments) async {
     Map<String, dynamic> config = jsonDecode(privateConfigFile.readAsStringSync());
     dbClientUsername = config["dbClientUsername"];
     dbClientPassword = config["dbClientPassword"];
-    coaop = config["crossOriginAccessOverridePassword"];
+    coaop = config["crossOriginAccessOverridePassword"];  // Must not be empty or null to be active.
+    if(coaop != null && coaop.isEmpty) {
+      coaop = null;
+    }
 
     if(dbClientUsername.isEmpty || dbClientPassword.isEmpty) {
       print("Invalid configuration file: ${privateConfigFile.path}");
@@ -113,14 +116,17 @@ class Request {
 
   Future _closeRequest() {
     if(_outData != null) {
+      if(!_outData.containsKey(ERROR_CODE)) {
+        // If we have no error, let the client know we did good.
+        _outData[ERROR_CODE] = ErrorCodes.SoFarSoGood;
+      }
       _response.write(jsonEncode(_outData));
+      _outData = null;
     }
     return _response.flush()
         .then((_) => _response.close())
         .then((_) => _db?.close())
-        .then((_) {
-          _outData = null;
-        }).catchError((_){});
+        .catchError((_){});
   }
 
   void _errorAttemptResponse(Object e) {
@@ -159,7 +165,6 @@ class Request {
         }
       }
       _outData[DataElements.error_object] = e.toString();
-      _response.write(_outData);
     } catch (e2) {}
     print("Error occurred - attempting response with: $_outData");
   }
@@ -193,6 +198,11 @@ class Request {
           print("pong");
           break;
 
+        case RequestCodes.auth:
+          f = _connectToDb()
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]));
+          break;
+
         case RequestCodes.addUser:
           f = _connectToDb()
               .then((_) => _generateNewUuid(1))
@@ -211,7 +221,7 @@ class Request {
           break;
 
         default:
-          _response.statusCode = HttpStatus.notAcceptable;
+          _response.statusCode = HttpStatus.notFound;
           _outData[ERROR_CODE] = ErrorCodes.UnknownRequestCode;
           print("Invalid request code received: '${inData[DataElements.cmd]}'");
       }
@@ -317,7 +327,7 @@ class Request {
 
   Future<String> _authenticateUser(String username, String password) {
     return _db.query(
-        "SELECT salt, passhash, uid FROM users WHERE name = @username",
+        "SELECT salt, passhash, uid FROM public.user WHERE name = @username",
         substitutionValues: {
           "username": username
         }).then((List<List<dynamic>> query) {
@@ -325,8 +335,8 @@ class Request {
             _markOut500Error(ErrorCodes.MultipleUsersFound);
             throw "Multiple query items received from auth.";
           } else if (query.isEmpty) {
-            _markOut200Error(ErrorCodes.WrongUsername);
-            throw "Wrong username.";
+            _markOut200Error(ErrorCodes.WrongAuth);
+            throw "Wrong username or password.";
           } else {
             if(query.first.length != 3) {
               _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
@@ -336,8 +346,8 @@ class Request {
               String passhash = query.first[1];
               String uid = query.first[2];
               if(!dbcrypt.checkpw(password + salt, passhash)) {
-                _markOut200Error(ErrorCodes.WrongPassword);
-                throw "Wrong password.";
+                _markOut200Error(ErrorCodes.WrongAuth);
+                throw "Wrong username or password.";
               } else {
                 return uid;
               }
@@ -375,7 +385,7 @@ class Request {
                 .catchError((e) {
                   if(e is PostgreSQLException) {
                     if(e.columnName == "uid") {
-                      _markOut200Error(ErrorCodes.InvalidUid);
+                      _markOut200Error(ErrorCodes.InvalidUidForNewProject);
                     }
                   }
                   throw e;

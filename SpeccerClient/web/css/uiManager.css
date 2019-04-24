@@ -40,6 +40,16 @@ input:not([type="color"]):not([type="checkbox"]):not([type="range"]):focus {
     /*     border-color: #49c4f4; */
 }
 
+textarea[error="true"],
+input:not([type="color"]):not([type="checkbox"]):not([type="range"])[error="true"] {
+    /*     background-color: #4f4f4f; */
+    /*     color: #CCCCCC; */
+    /*     border: solid 2px #666666; */
+    /*border: solid 2px;*/
+    border-color: red;
+}
+
+
 
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {

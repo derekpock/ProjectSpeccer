@@ -5,6 +5,7 @@ class RequestCodes {
   static const pong = "pong";
   static const addUser = "addUser";
   static const createProject = "createProject";
+  static const auth = "auth";
 }
 
 class DataElements {
@@ -26,6 +27,7 @@ class DataElements {
 
 class ErrorCodes {
   // Generic
+  static const SoFarSoGood = "SoFarSoGood";
   static const UnknownError = "UnknownError";
   static const UnknownPostgresError = "UnknownPostgresError";
 
@@ -34,17 +36,17 @@ class ErrorCodes {
   static const InvalidRequestFormat = "InvalidRequestFormat";
   static const UnknownRequestCode = "UnknownRequestCode";
 
-  // Client errors
-  static const UsernameTaken = "UsernameTaken";
-  static const InvalidNewPassword = "InvalidNewPassword";
-  static const WrongUsername = "WrongUsername";
-  static const WrongPassword = "WrongPassword";
-  static const InvalidUid = "InvalidUid";
-
   // Server errors
   static const DBAuthFailure = "DBAuthFailure";
   static const MultipleUsersFound = "MultipleUsersFound";
   static const UuidGenerationFailure = "UuidGenerationFailure";
   static const InvalidDatabaseStructure = "InvalidDatabaseStructure";
   static const ProjectCreationFailure = "ProjectCreationFailure";
+
+  // Client errors
+  static const UsernameTaken = "UsernameTaken";
+  static const InvalidNewPassword = "InvalidNewPassword";
+  static const WrongAuth = "WrongAuth";
+  static const InvalidUidForNewProject = "InvalidUidForNewProject";
+
 }
