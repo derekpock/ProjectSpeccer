@@ -245,7 +245,7 @@ ALTER TABLE ONLY public.comment
 --
 
 ALTER TABLE ONLY public.comment
-    ADD CONSTRAINT comment_uid_fkey FOREIGN KEY (uid) REFERENCES public.identifier(id);
+    ADD CONSTRAINT comment_uid_fkey FOREIGN KEY (uid) REFERENCES public."user"(uid);
 
 
 --
@@ -261,7 +261,7 @@ ALTER TABLE ONLY public.component
 --
 
 ALTER TABLE ONLY public.component
-    ADD CONSTRAINT component_pid_fkey FOREIGN KEY (pid) REFERENCES public.identifier(id);
+    ADD CONSTRAINT component_pid_fkey FOREIGN KEY (pid) REFERENCES public.project(pid);
 
 
 --
@@ -269,7 +269,7 @@ ALTER TABLE ONLY public.component
 --
 
 ALTER TABLE ONLY public.component
-    ADD CONSTRAINT component_uid_fkey FOREIGN KEY (uid) REFERENCES public.identifier(id);
+    ADD CONSTRAINT component_uid_fkey FOREIGN KEY (uid) REFERENCES public."user"(uid);
 
 
 --
@@ -285,7 +285,7 @@ ALTER TABLE ONLY public.project
 --
 
 ALTER TABLE ONLY public.role
-    ADD CONSTRAINT role_pid_fkey FOREIGN KEY (pid) REFERENCES public.identifier(id);
+    ADD CONSTRAINT role_pid_fkey FOREIGN KEY (pid) REFERENCES public.project(pid);
 
 
 --
@@ -293,7 +293,7 @@ ALTER TABLE ONLY public.role
 --
 
 ALTER TABLE ONLY public.role
-    ADD CONSTRAINT role_uid_fkey FOREIGN KEY (uid) REFERENCES public.identifier(id);
+    ADD CONSTRAINT role_uid_fkey FOREIGN KEY (uid) REFERENCES public."user"(uid);
 
 
 --
