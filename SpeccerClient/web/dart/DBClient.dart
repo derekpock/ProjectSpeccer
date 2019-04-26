@@ -56,22 +56,4 @@ class DBClient {
           throw "An error occurred when making a request to the server. Details below:\n${error}";
         });
   }
-
-//  void addUser(String username, String password, String email) {
-//    var data = _createUserAuthData(RequestCodes.addUser, username, password);
-//    data[DataElements.email] = email;
-//
-//    JsonHttpRequest.makeRequest(data).then(_dataFromServer);
-//  }
-//
-//  void login(String username, String password) {
-//    JsonHttpRequest.makeRequest(_createUserAuthData(RequestCodes.auth, username, password)).then(_dataFromServer);
-//  }
-//
-//  void createProject(String username, String password, bool isPublic) {
-//    var data = _createUserAuthData(RequestCodes.createProject, username, password);
-//    data[DataElements.isPublic] = isPublic;
-//
-//    JsonHttpRequest.makeRequest(data).then(_dataFromServer);
-//  }
 }

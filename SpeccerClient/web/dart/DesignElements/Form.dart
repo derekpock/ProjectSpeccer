@@ -4,18 +4,10 @@ import '../CSSClasses.dart';
 
 class Form {
   TableElement _element;
-//  DivElement _leftElement;
-//  DivElement _rightElement;
 
   Form() {
     _element = new TableElement();
     _element.classes.add(CSSClasses.form);
-//
-//    _leftElement = new DivElement();
-//    _rightElement = new DivElement();
-//
-//    _element.append(_leftElement);
-//    _element.append(_rightElement);
   }
 
   TableRowElement addInputViaString(String text, Element input) {
