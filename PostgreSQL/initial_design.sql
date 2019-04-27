@@ -25,6 +25,7 @@ ALTER TABLE ONLY public.component DROP CONSTRAINT component_cid_fkey;
 ALTER TABLE ONLY public.comment DROP CONSTRAINT comment_uid_fkey;
 ALTER TABLE ONLY public.comment DROP CONSTRAINT comment_id_target_fkey;
 ALTER TABLE ONLY public.comment DROP CONSTRAINT comment_id_fkey;
+DROP INDEX public.component_index_pid;
 ALTER TABLE ONLY public."user" DROP CONSTRAINT user_pkey;
 ALTER TABLE ONLY public."user" DROP CONSTRAINT user_name_key;
 ALTER TABLE ONLY public.role DROP CONSTRAINT role_pkey;
@@ -161,7 +162,6 @@ CREATE TABLE public."user" (
     name character varying(50) NOT NULL,
     passhash character(60) NOT NULL,
     date_join timestamp with time zone NOT NULL,
-    salt character(8) NOT NULL,
     email text
 );
 
@@ -222,6 +222,13 @@ ALTER TABLE ONLY public."user"
 
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_pkey PRIMARY KEY (uid);
+
+
+--
+-- Name: component_index_pid; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX component_index_pid ON public.component USING btree (pid);
 
 
 --

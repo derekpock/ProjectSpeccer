@@ -302,16 +302,13 @@ class Request {
       _outData[ERROR_CODE] = ErrorCodes.InvalidNewPassword;
       return Future.error("Password not long enough.");
     } else {
-      String salt = _generateSalt();
-      String hash = dbcrypt.hashpw(password + salt, dbcrypt.gensalt());
       return _db.query(
-          "INSERT INTO public.user VALUES (@uid, @name, @passhash, @date_join, @salt, @email)",
+          "INSERT INTO public.user VALUES (@uid, @name, @passhash, @date_join, @email)",
           substitutionValues: {
             "uid": uid,
             "name": username,
-            "passhash": hash,
+            "passhash": dbcrypt.hashpw(password, dbcrypt.gensalt()),
             "date_join": DateTime.now().toIso8601String(),
-            "salt": salt,
             "email": email
           }).then((_) => _outData["uid"] = uid)
           .catchError((e) {
@@ -327,7 +324,7 @@ class Request {
 
   Future<String> _authenticateUser(String username, String password) {
     return _db.query(
-        "SELECT salt, passhash, uid FROM public.user WHERE name = @username",
+        "SELECT passhash, uid FROM public.user WHERE name = @username",
         substitutionValues: {
           "username": username
         }).then((List<List<dynamic>> query) {
@@ -338,14 +335,13 @@ class Request {
             _markOut200Error(ErrorCodes.WrongAuth);
             throw "Wrong username or password.";
           } else {
-            if(query.first.length != 3) {
+            if(query.first.length != 2) {
               _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
-              throw "Needed 3 items from from db in auth!";
+              throw "Needed 2 items from from db in auth!";
             } else {
-              String salt = query.first[0];
-              String passhash = query.first[1];
-              String uid = query.first[2];
-              if(!dbcrypt.checkpw(password + salt, passhash)) {
+              String passhash = query.first[0];
+              String uid = query.first[1];
+              if(!dbcrypt.checkpw(password, passhash)) {
                 _markOut200Error(ErrorCodes.WrongAuth);
                 throw "Wrong username or password.";
               } else {
