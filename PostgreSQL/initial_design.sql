@@ -26,6 +26,7 @@ ALTER TABLE ONLY public.comment DROP CONSTRAINT comment_uid_fkey;
 ALTER TABLE ONLY public.comment DROP CONSTRAINT comment_id_target_fkey;
 ALTER TABLE ONLY public.comment DROP CONSTRAINT comment_id_fkey;
 DROP INDEX public.component_index_pid;
+DROP INDEX public.component_index_id_target;
 ALTER TABLE ONLY public."user" DROP CONSTRAINT user_pkey;
 ALTER TABLE ONLY public."user" DROP CONSTRAINT user_name_key;
 ALTER TABLE ONLY public.role DROP CONSTRAINT role_pkey;
@@ -222,6 +223,13 @@ ALTER TABLE ONLY public."user"
 
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_pkey PRIMARY KEY (uid);
+
+
+--
+-- Name: component_index_id_target; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX component_index_id_target ON public.comment USING btree (id_target);
 
 
 --

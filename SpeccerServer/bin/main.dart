@@ -96,7 +96,13 @@ class Request {
 
   HttpRequest _request;
   HttpResponse _response;
+
+  /// Response that is sent back to the user.
+  /// Note: this is generally WRITE ONLY.
   Map<String, dynamic> _outData;
+
+  /// Database connection.
+  /// Null until [_connectToDb] is called (for each Request).
   PostgreSQLConnection _db;
 
   Request(HttpRequest request) {
@@ -189,10 +195,10 @@ class Request {
     if(inData.containsKey(DataElements.cmd)) {
       _response.statusCode = HttpStatus.ok;
       _outData[DataElements.cmd] = inData[DataElements.cmd];
+      print(inData[DataElements.cmd]);
 
       // Within each case (non-default), only return 200 with error information.
       switch (inData[DataElements.cmd]) {
-
         case RequestCodes.ping:
           _outData[DataElements.cmd] = "pong";
           print("pong");
@@ -205,19 +211,104 @@ class Request {
 
         case RequestCodes.addUser:
           f = _connectToDb()
-              .then((_) => _generateNewUuid(1))
-              .then((String uuid) => _addUser(uuid, inData[DataElements.username], inData[DataElements.password], inData[DataElements.email]));
-          print("adduser ${inData[DataElements.username]}");
+              .then((_) => _generateNewUuid(IdentifierTypes.User))
+              .then((String uuid) =>
+                  _addUser(
+                      uuid,
+                      inData[DataElements.username],
+                      inData[DataElements.password],
+                      inData[DataElements.email]
+                  )
+              );
           break;
 
         case RequestCodes.createProject:
           f = _connectToDb()
+              .then((_) => Future.wait([
+                _authenticateUser(inData[DataElements.username], inData[DataElements.password]),
+                _generateNewUuid(IdentifierTypes.Project)
+              ]))
+              .then((List<String> ids) => _createProject(ids[0], ids[1], inData[DataElements.isPublic]));
+          break;
+
+        case RequestCodes.browseProjects:
+          f = _connectToDb()
+              .then((_) {
+                if(inData.containsKey(DataElements.username)) {
+                  return _authenticateUser(inData[DataElements.username], inData[DataElements.password]);
+                } else {
+                  return "00000000-0000-0000-0000-000000000000";
+                }
+              })
+              .then((Object uid) => _browseProjects(uid));
+          break;
+
+        case RequestCodes.componentGetAll:
+          f = _connectToDb()
+              .then((_) {
+                if(inData.containsKey(DataElements.username)) {
+                  return _authenticateUser(inData[DataElements.username], inData[DataElements.password]);
+                } else {
+                  return "00000000-0000-0000-0000-000000000000";
+                }
+              })
+              .then((Object uid) => _userIsObserver(uid, inData[DataElements.pid]))
+              .then((_) => _componentGetAll(inData[DataElements.pid]));
+          break;
+
+        case RequestCodes.componentAdd:
+          f = _connectToDb()
               .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
-              .then((String uid) => [uid, _generateNewUuid(2)])
-              .then((List<Object> args) => _createProject(args[1], args[0], inData[DataElements.isPublic]))
-              .then((String pid) {
-                _outData[DataElements.pid] = pid;
-              });
+              .then((String uid) =>
+                  _userIsContributer(uid, inData[DataElements.pid])
+                  .then((_) => _generateNewUuid(IdentifierTypes.Component))
+                  .then((String newId) =>
+                      _componentAdd(
+                         newId, // cid
+                         inData[DataElements.pid],
+                         uid, // uid
+                         inData[DataElements.componentType],
+                         inData[DataElements.componentData]
+                      )
+                  )
+              );
+          break;
+
+        case RequestCodes.commentGetAll:
+          f = _connectToDb()
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) =>
+                  _userCanInteractComment(uid, inData[DataElements.targetId])
+                  .then((_) => _commentGetAll(inData[DataElements.targetId]))
+              );
+          break;
+
+        case RequestCodes.commentAdd:
+          f = _connectToDb()
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) =>
+                  _userCanInteractComment(uid, inData[DataElements.targetId])
+                  .then((_) => _generateNewUuid(IdentifierTypes.Comment))
+                  .then((String newId) => _commentAdd(uid, newId, inData[DataElements.targetId], inData[DataElements.commentValue]))
+              );
+          break;
+
+        case RequestCodes.roleSet:
+          f = _connectToDb()
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) =>
+                  _userIsOwner(uid, inData[DataElements.pid])
+                  .then((_) =>
+                      _roleSet(
+                          uid,
+                          inData[DataElements.targetId],
+                          inData[DataElements.pid],
+                          inData[DataElements.roleCanView],
+                          inData[DataElements.roleCanContribute],
+                          inData[DataElements.roleCanManage]
+                      )
+                  )
+              );
           break;
 
         default:
@@ -238,6 +329,10 @@ class Request {
   // Only return 500 level errors for real server issues, such as unable to
   // connect to the database or other _unexpected_ exceptions.
   //
+  // Only return 400 level errors for rogue clients - people trying to do things
+  // that they aren't allowed to do. If these are reached in development, the
+  // client needs to be changed to prevent them from doing this.
+  //
   // Otherwise, return 200 level and provide any errors using internally
   // managed [ErrorCodes]. We don't want to throw red errors to the browser
   // if the user forgets their password, etc.
@@ -255,6 +350,12 @@ class Request {
     _response.statusCode = HttpStatus.internalServerError;
   }
 
+  void _markOut400Error(String code) {
+    _outData[ERROR_CODE] = code;
+    _response.statusCode = HttpStatus.badRequest;
+  }
+
+  /// Initializes [_db] for this Request.
   Future _connectToDb() {
     _db =
         new PostgreSQLConnection(
@@ -272,10 +373,11 @@ class Request {
     });
   }
 
+  /// Returns a new uuid.
   Future<String> _generateNewUuid(int type) {
     String uuid = uuidGen.v4();
     return _db.query(
-        "INSERT INTO public.identifier VALUES (@uuid , @type);",
+        "INSERT INTO public.identifier VALUES (@uuid , @type)",
         substitutionValues: {
           "uuid": uuid,
           "type": type
@@ -289,15 +391,10 @@ class Request {
         });
   }
 
-  String _generateSalt() {
-    StringBuffer sb = new StringBuffer();
-    for(int i = 0; i < 8; i++) {
-      sb.writeCharCode(secureRandom.nextInt(255));
-    }
-    return sb.toString();
-  }
-
-  Future _addUser(String uid, String username, String password, String email) {
+  /// Inserts new user to DB.
+  /// Adds [uid] to outData.
+  /// Returns [uid].
+  Future<String> _addUser(String uid, String username, String password, String email) {
     if(password.length < 8) {
       _outData[ERROR_CODE] = ErrorCodes.InvalidNewPassword;
       return Future.error("Password not long enough.");
@@ -310,7 +407,7 @@ class Request {
             "passhash": dbcrypt.hashpw(password, dbcrypt.gensalt()),
             "date_join": DateTime.now().toIso8601String(),
             "email": email
-          }).then((_) => _outData["uid"] = uid)
+          }).then((_) => _outData[DataElements.uid] = uid)  // Also returns uid.
           .catchError((e) {
             if(e is PostgreSQLException) {
               if(e.constraintName == "user_name_key") {
@@ -322,6 +419,9 @@ class Request {
     }
   }
 
+  /// Authenticates user from DB.
+  /// Adds [uid] to outData.
+  /// Returns [uid].
   Future<String> _authenticateUser(String username, String password) {
     return _db.query(
         "SELECT passhash, uid FROM public.user WHERE name = @username",
@@ -345,6 +445,7 @@ class Request {
                 _markOut200Error(ErrorCodes.WrongAuth);
                 throw "Wrong username or password.";
               } else {
+                _outData[DataElements.uid] = uid;
                 return uid;
               }
             }
@@ -352,41 +453,299 @@ class Request {
         });
   }
 
-  Future<String> _createProject(String pid, String uid, bool public) {
+  /// Inserts new project to DB.
+  /// Inserts [uid] as creator of pid to DB.
+  /// Adds [pid] to outData.
+  Future _createProject(String uid, String pid, bool public) {
+    if(public == null) {
+      _markOut400Error(ErrorCodes.InvalidRequestArguments);
+      throw "Public specifier not provided when creating project.";
+    } else {
+      return Future(
+              () =>
+              _db.query(
+                  "INSERT INTO public.project VALUES (@pid, @public, @date)",
+                  substitutionValues: {
+                    "pid": pid,
+                    "public": public,
+                    "date": DateTime.now().toIso8601String()
+                  }
+              ).catchError((e) {
+                if(e is PostgreSQLException) {
+                  _markOut500Error(ErrorCodes.ProjectCreationFailure);
+                }
+                throw e;
+              })
+      ).then(
+              (_) =>
+              _db.query(
+                  "INSERT INTO public.role VALUES (@uid, @pid, @is_owner, @is_developer)",
+                  substitutionValues: {
+                    "uid": uid,
+                    "pid": pid,
+                    "is_owner": true,
+                    "is_developer": true
+                  }
+              ).catchError((e) {
+                if(e is PostgreSQLException) {
+                  if(e.columnName == "uid") {
+                    _markOut200Error(ErrorCodes.InvalidUidForNewProject);
+                  }
+                }
+                throw e;
+              })
+      ).then((_) => _outData[DataElements.pid] = pid);
+    }
+  }
+
+  /// Gets all projects readable by [uid] from DB.
+  /// Adds projects to outData.
+  Future _browseProjects(String uid) {
+    // For now, we only want to return pid's that the user can observe.
+    // We'll do this by returning a List<String> of pids.
     return Future(
-            () =>
-                _db.query(
-                    "INSERT INTO public.project VALUES (@pid, @public, @date)",
-                    substitutionValues: {
-                      "pid": pid,
-                      "public": public,
-                      "date": DateTime.now().toIso8601String()
-                    }
-                ).catchError((e) {
-                  if(e is PostgreSQLException) {
-                    _markOut500Error(ErrorCodes.ProjectCreationFailure);
-                  }
-                  throw e;
-                })
-    ).then(
-            (_) =>
-                _db.query(
-                    "INSERT INTO public.role VALUES (@uid, @pid, @is_owner, @is_developer)",
-                    substitutionValues: {
-                      "uid": uid,
-                      "pid": pid,
-                      "is_owner": true,
-                      "is_developer": true
-                    })
-                .catchError((e) {
-                  if(e is PostgreSQLException) {
-                    if(e.columnName == "uid") {
-                      _markOut200Error(ErrorCodes.InvalidUidForNewProject);
-                    }
-                  }
-                  throw e;
-                })
-    ).then((_) => pid);
+        () =>
+            // Get all public projects
+            // Get all private projects where uid is a developer (owners are considered developers)
+            _db.query(
+                "select distinct project.pid from public.project as project "
+                "inner join public.role as role "
+                "on project.pid = role.pid "
+                "where ( project.is_public or ( role.uid = '@uid' and role.is_developer ) )",
+                substitutionValues: {
+                  "uid": uid
+                }
+            ).catchError((e) {
+              if(e is PostgreSQLException) {
+                if(e.columnName == "uid") {
+                  _markOut500Error(ErrorCodes.InvalidInternalUid);
+                }
+              }
+              throw e;
+            })
+    ).then((List<List<dynamic>> data) {
+      if(data.length != 1) {
+        _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
+      } else {
+        _outData[DataElements.projects] = data[0];
+      }
+    });
+  }
+
+  /// Verifies [uid] has legitimate roles to view [pid] from DB.
+  /// Throws error if not allowed.
+  Future _userIsObserver(String uid, String pid) {
+    return
+      _db.query(
+          "select distinct project.pid from public.project as project "
+          "inner join public.role as role "
+          "on project.pid = role.pid "
+          "where ( project.pid = '@pid' ) "
+          "and ( project.is_public or ( role.uid = '@uid' ) ) ",
+          substitutionValues: {
+            "pid": pid,
+            "uid": uid
+          }
+      ).then((List<List<dynamic>> data) {
+        if(data.isEmpty || data[0].isEmpty) {
+          _markOut400Error(ErrorCodes.OperationNotAuthorized);
+          throw "User is not an observer of this project.";
+        }
+      });
+  }
+
+  /// Verifies [uid] has legitimate roles to contribute to [pid] from DB.
+  /// Throws error if not allowed.
+  Future _userIsContributer(String uid, String pid) {
+    return
+      _db.query(
+          "select distinct project.pid from public.project as project "
+          "inner join public.role as role "
+          "on project.pid = role.pid "
+          "where ( project.pid = '@pid' ) "
+          "and ( role.uid = '@uid' and role.is_developer ) ",
+          substitutionValues: {
+            "pid": pid,
+            "uid": uid
+          }
+      ).then((List<List<dynamic>> data) {
+        if(data.isEmpty || data[0].isEmpty) {
+          _markOut400Error(ErrorCodes.OperationNotAuthorized);
+          throw "User is not a contributer of this project.";
+        }
+      });
+  }
+
+  /// Verifies [uid] has legitimate roles to manage [pid] from DB.
+  /// Throws error if not allowed.
+  Future _userIsOwner(String uid, String pid) {
+    return
+      _db.query(
+          "select distinct project.pid from public.project as project "
+          "inner join public.role as role "
+          "on project.pid = role.pid "
+          "where ( project.pid = '@pid' ) "
+          "and ( role.uid = '@uid' and role.is_owner ) ",
+          substitutionValues: {
+            "pid": pid,
+            "uid": uid
+          }
+      ).then((List<List<dynamic>> data) {
+        if(data.isEmpty || data[0].isEmpty) {
+          _markOut400Error(ErrorCodes.OperationNotAuthorized);
+          throw "User is not an owner of this project.";
+        }
+      });
+  }
+
+
+  /// Gets all components of [pid] from DB.
+  /// Adds components to outData.
+  Future _componentGetAll(String pid) {
+    return
+      _db.query(
+          "select component.json from public.component as component "
+          "where component.pid = '@pid'",
+          substitutionValues: {
+            "pid": pid
+          }
+      ).then((List<List<dynamic>> data) {
+          _outData[DataElements.components] = data;
+      });
+  }
+
+  /// Inserts component data by [uid] to [pid] of [type] with [data] and new uuid [cid] to DB.
+  /// Throws error if not allowed.
+  Future _componentAdd(String cid, String pid, String uid, int type, String jsonData) {
+    return
+      _db.query(
+          "insert into public.component "
+          "( cid, pid, uid, date_created, type, data ) "
+          "values ( @cid, @pid, @uid, @date_created, @type, @data )",
+          substitutionValues: {
+            "cid": cid,
+            "pid": pid,
+            "uid": uid,
+            "date_created": DateTime.now().toIso8601String(),
+            "type": type,
+            "data": jsonData
+          }
+      );
+  }
+
+//  Future _commentIsViewable(String uid, String comment_id) {
+//    return Future(
+//        () =>
+//            _db.query(
+//
+//            )
+//    );
+//  }
+
+  Future _commentGetAll(String id_target) {
+    return Future(
+        () =>
+            _db.query(
+                "select comment.value, comment.date_created, comment.uid from public.comment as comment "
+                "where comment.id_target = '@target'",
+                substitutionValues: {
+                  "target": id_target
+                }
+            )
+    ).then((List<List<dynamic>> data) => _outData[DataElements.comments] = data);
+  }
+
+  Future _commentAdd(String uid, String new_id, String target_id, String value) {
+    return
+      _db.query(
+          "insert into public.comment values (@id, @uid, @target, @date, @value)",
+          substitutionValues: {
+            "id": new_id,
+            "uid": uid,
+            "target": target_id,
+            "date": DateTime.now().toIso8601String(),
+            "value": value
+          }
+      );
+  }
+
+  /// Verifies whether [uid] can comment on [target_id].
+  /// Throws error if not allowed.
+  Future _userCanInteractComment(String uid, String target_id) {
+    return
+      _db.query(
+          "select identifier.type from public.identifier as identifier "
+          "where identifier.id = '@target_id'",
+          substitutionValues: {
+            "target_id": target_id
+          }
+      ).then((List<List<dynamic>> data) {
+        if(data.isEmpty || data[0].isEmpty) {
+          _markOut400Error(ErrorCodes.InvalidDatabaseStructure);
+          throw "Could not find that target identifier in the database.";
+        } else {
+          switch(data.first.first) {
+            case IdentifierTypes.User:
+              // Can always comment on users (for now).
+              return null;
+              break;
+
+            case IdentifierTypes.Project:
+            case IdentifierTypes.Component:
+              // Check if we can access this.
+              return _userIsObserver(uid, target_id);
+              break;
+
+            case IdentifierTypes.Comment:
+              // We will implement this later.
+              _markOut500Error(ErrorCodes.NotImplemented);
+              throw "Commenting on comments is not yet implemented.";
+//                    _commentAdd(uid, new_id, target_id, value);
+              break;
+
+            default:
+              _markOut400Error(ErrorCodes.IdentifierNotFound);
+              throw "Identifier found in database is not known.";
+              break;
+          }
+        }
+      });
+  }
+
+  Future _roleSet(String uid, String targetId, String pid, bool canView, bool canContribute, bool canManage) {
+    if(uid == targetId) {
+      _markOut500Error(ErrorCodes.NotImplemented);
+      throw "Setting one's own roles is not implemented.";
+    } else if (!canView && (canContribute || canManage)) {
+      _markOut400Error(ErrorCodes.InvalidRequestArguments);
+      throw "Cannot set contribute nor manage flag if view flag is set to false.";
+    } else {
+      if(canView) {
+        return
+          _db.query(
+              "insert into public.role values (@uid, @pid, @owner, @developer) "
+              "on conflict on constraint role_pkey "
+              "do update set (is_owner, is_developer) = (@owner, @developer)",
+              substitutionValues: {
+                "uid": targetId,
+                "pid": pid,
+                "owner": canManage,
+                "developer": canContribute
+              }
+          );
+      } else {
+        return
+          _db.query(
+              "delete from public.role "
+              "where public.role.uid = @uid "
+              "and public.role.pid = @pid",
+              substitutionValues: {
+                "uid": targetId,
+                "pid": pid
+              }
+          );
+      }
+    }
   }
 }
 
