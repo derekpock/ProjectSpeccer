@@ -9,6 +9,16 @@ import 'Requests/RequestLogin.dart';
 import 'Requests/RequestNewProject.dart';
 import 'Structures/Project.dart';
 import 'Structures/Role.dart';
+import 'DesignElements/AbstractStage.dart';
+import 'UIPages/PageProjectInteractionInterface.dart';
+
+import 'DesignElements/Stages/StageAccessibility.dart';
+import 'DesignElements/Stages/StageDesign.dart';
+import 'DesignElements/Stages/StageDistribution.dart';
+import 'DesignElements/Stages/StageImplementation.dart';
+import 'DesignElements/Stages/StageRequirements.dart';
+import 'DesignElements/Stages/StageSpecifications.dart';
+import 'DesignElements/Stages/StageTesting.dart';
 
 part 'UIPages/PageBrowse.dart';
 part 'UIPages/PageHome.dart';

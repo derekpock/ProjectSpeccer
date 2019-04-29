@@ -28,6 +28,7 @@ class UIManager implements UIManagerInteractionInterface {
   TopHeaderButton _butLogout;
   TopHeaderButton _butMyProjects;
   TopHeaderButton _butRegister;
+  TopHeaderButton _butComments;
 
   DivElement _divUI;
   DivElement _divUIHeader;
@@ -85,6 +86,7 @@ class UIManager implements UIManagerInteractionInterface {
     _butLogout = new TopHeaderButton("Logout", userLoggedOut);
     _butMyProjects = new TopHeaderButton("My Projects", () => setActivePage(_pageMyProjects));
     _butRegister = new TopHeaderButton("Register", () => setActivePage(_pageRegister));
+    _butComments = new TopHeaderButton("Comments", () => toggleCommentsPane());
 
 
     // Add page header buttons to div.
@@ -97,6 +99,12 @@ class UIManager implements UIManagerInteractionInterface {
 
     _divUIHeader.append(_butMyProjects.getElement());
     _divUIHeader.append(_butLogout.getElement());;
+
+    DivElement headerSpacer = new DivElement();
+    headerSpacer.style.flex = "1";
+    _divUIHeader.append(headerSpacer);
+
+    _divUIHeader.append(_butComments.getElement());
 
     // Add divs to parent divs.
     _divUIBody.append(_divUIBodyContent);
@@ -122,6 +130,10 @@ class UIManager implements UIManagerInteractionInterface {
     _pageMyProjects.refresh(
         _projects.where((Project p) => _roles.containsKey(p.getPid()) && _roles[p.getPid()].isOwner()).toList()
     );
+  }
+
+  void toggleCommentsPane() {
+    _divUIBodyPane.classes.toggle(CSSClasses.hidden);
   }
 
   void refreshProjectsAndRoles() {
@@ -217,6 +229,7 @@ class UIManager implements UIManagerInteractionInterface {
   }
 
   void openProject(Project p) {
-
+    _pageProject.openProject(p, _roles[p]);
+    setActivePage(_pageProject);
   }
 }

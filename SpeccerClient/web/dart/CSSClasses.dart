@@ -13,4 +13,6 @@ class CSSClasses {
   static const uiBodyContentPage = "uiBodyContentPage";
   static const uiBodyContentPageHeader = "uiBodyContentPageHeader";
   static const uiBodyContentPageContent = "uiBodyContentPageContent";
+
+  static const projectStage = "projectStage";
 }

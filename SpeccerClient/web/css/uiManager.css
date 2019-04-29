@@ -128,31 +128,31 @@ input[type=range]:active::-webkit-slider-thumb {
     cursor: pointer;
     /*     color: #CCCCCC; */
     /*     background-color: #4f4f4f; */
-    background-color: #CCCCCC;
+    background-color: #FF880088;
 }
 
 .Clickable:hover {
     /*color: #FFFFFF;*/
-    background-color: #DDDDDD;
+    background-color: #FF880055;
 }
 
 .Clickable:active {
     /*color: #AAAAAA;*/
-    background-color: #BBBBBB;
+    background-color: #FF8800BB;
 }
 
 .Clickable[disabled="true"] {
-    background-color: #CCCCCC;
-    color: #888888;
-    cursor: default;
+    background-color: #FF880055;
+    color: #00000055;
+    cursor: not-allowed;
 }
 
 .Clickable[disabled="true"]:active {
-    color: #888888;
+    color: #00000055;
 }
 
 .Clickable[disabled="true"]:hover {
-    color: #888888;
+    color: #00000055;
 }
 
 .verticalFlow {
@@ -238,4 +238,17 @@ input[type=range]:active::-webkit-slider-thumb {
     border: solid 4px #FFFFFF;
     padding: 4px;
     background-color: #FF880022;
+}
+
+.projectStage {
+    background-color: #FF880011;
+}
+
+.projectStage div:first-child {
+
+}
+
+.projectStage div:last-child {
+    height: 10px;
+    background-color: #FF880033;
 }
