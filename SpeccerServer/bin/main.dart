@@ -314,6 +314,13 @@ class Request {
               );
           break;
 
+        case RequestCodes.setProjectPublicity:
+          f = _connectToDb()
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) => _userIsOwner(uid, inData[DataElements.pid]))
+              .then((_) => _changeProjectPublicity(inData[DataElements.pid], inData[DataElements.isPublic]));
+          break;
+
         default:
           _response.statusCode = HttpStatus.notFound;
           _outData[ERROR_CODE] = ErrorCodes.UnknownRequestCode;
@@ -610,7 +617,6 @@ class Request {
       });
   }
 
-
   /// Gets all components of [pid] from DB.
   /// Adds components to outData.
   Future _componentGetAll(String pid) {
@@ -632,8 +638,10 @@ class Request {
     return
       _db.query(
           "insert into public.component "
-          "( cid, pid, uid, date_created, type, data ) "
-          "values ( @cid, @pid, @uid, @date_created, @type, @data )",
+          "values ( @cid, "
+            "coalesce((select max(component.revision) + 1 from public.component as component "
+            "where component.cid = @cid), 0), "
+          "@pid, @uid, @date_created, @type, @data )",
           substitutionValues: {
             "cid": cid,
             "pid": pid,
@@ -737,7 +745,7 @@ class Request {
           _db.query(
               "insert into public.role values (@uid, @pid, @owner, @developer) "
               "on conflict on constraint role_pkey "
-              "do update set (is_owner, is_developer) = (@owner, @developer)",
+              "do update set is_owner = @owner, is_developer = @developer",
               substitutionValues: {
                 "uid": targetId,
                 "pid": pid,
@@ -758,6 +766,17 @@ class Request {
           );
       }
     }
+  }
+
+  Future _changeProjectPublicity(String pid, bool isPublic) {
+    return
+      _db.query(
+          "update public.project set is_public = @isPublic where pid = @pid",
+          substitutionValues: {
+            "isPublic": isPublic,
+            "pid": pid
+          }
+      );
   }
 }
 

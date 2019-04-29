@@ -23,6 +23,7 @@ class RequestCodes {
   static const commentAdd = "commentAddToId";
 
   static const roleSet = "roleSet";
+  static const setProjectPublicity = "setProjectPublicity";
 }
 
 class DataElements {
@@ -54,6 +55,7 @@ class DataElements {
   static const postgres_tableName = "postgres_tableName";
 
   static const error_object = "error_object";
+  static const error_stacktrace = "error_stacktrace";
 }
 
 class ErrorCodes {

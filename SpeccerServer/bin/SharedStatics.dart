@@ -23,6 +23,7 @@ class RequestCodes {
   static const commentAdd = "commentAddToId";
 
   static const roleSet = "roleSet";
+  static const setProjectPublicity = "setProjectPublicity";
 }
 
 class DataElements {
