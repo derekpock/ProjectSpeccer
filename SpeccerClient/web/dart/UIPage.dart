@@ -6,17 +6,21 @@ import 'UIManagerInteractionInterface.dart';
 import 'DesignElements/Form.dart';
 import 'Requests/RequestAddUser.dart';
 import 'Requests/RequestLogin.dart';
+import 'Requests/RequestNewProject.dart';
+import 'Structures/Project.dart';
+import 'Structures/Role.dart';
 
+part 'UIPages/PageBrowse.dart';
 part 'UIPages/PageHome.dart';
 part 'UIPages/PageLogin.dart';
-part 'UIPages/PageLogout.dart';
+part 'UIPages/PageMyProjects.dart';
+part 'UIPages/PageProject.dart';
 part 'UIPages/PageRegister.dart';
 
 class UIPage {
   UIManagerInteractionInterface _uimii;
 
   DivElement _element;
-  DivElement _topHeaderButton;
 
   HeadingElement _header;
   DivElement _content;
@@ -28,23 +32,17 @@ class UIPage {
     _uimii = uimii;
 
     _element = new DivElement();
-    _element.classes.add(CSSClasses.uiPage);
+    _element.classes.add(CSSClasses.uiBodyContentPage);
     if(hidden) {
       _element.classes.add(CSSClasses.hidden);
     }
 
-    _topHeaderButton = new DivElement();
-    _topHeaderButton.setInnerHtml(title);
-    _topHeaderButton.classes.add(CSSClasses.button);
-    _topHeaderButton.classes.add(CSSClasses.clickable);
-    _topHeaderButton.classes.add(CSSClasses.topHeaderButton);
-
     _header = new HeadingElement.h2();
     _header.setInnerHtml(title);
-    _header.classes.add(CSSClasses.uiPageHeader);
+    _header.classes.add(CSSClasses.uiBodyContentPageHeader);
 
     _content = new DivElement();
-    _content.classes.add(CSSClasses.uiPageContent);
+    _content.classes.add(CSSClasses.uiBodyContentPageContent);
 
     _element.append(_header);
     _element.append(_content);
@@ -52,9 +50,5 @@ class UIPage {
 
   DivElement getElement() {
     return _element;
-  }
-
-  DivElement getTopHeaderButton() {
-    return _topHeaderButton;
   }
 }

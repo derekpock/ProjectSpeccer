@@ -15,7 +15,6 @@ class RequestLogin extends AbstractRequest {
     addUserAuthData(username, password);
   }
 
-  @override
   void dataReceived(Map<String, dynamic> data, UIManagerInteractionInterface uimii) {
     switch(data[ERROR_CODE]) {
       case ErrorCodes.SoFarSoGood:
@@ -26,7 +25,7 @@ class RequestLogin extends AbstractRequest {
         uimii.badLogin();
         break;
       default:
-        throw "Error pinging server: ${data[ERROR_CODE]}";
+        throw "Error logging into server: ${data[ERROR_CODE]}";
     }
   }
 }

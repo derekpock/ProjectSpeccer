@@ -2,7 +2,6 @@
 import '../AbstractRequest.dart';
 import '../SharedStatics.dart';
 import '../UIManagerInteractionInterface.dart';
-import 'dart:html';
 
 
 class RequestAddUser extends AbstractRequest {
@@ -30,7 +29,7 @@ class RequestAddUser extends AbstractRequest {
         uimii.usernameTaken();
         break;
       default:
-        throw "Error pinging server: ${data[ERROR_CODE]}";
+        throw "Error adding new user to server: ${data[ERROR_CODE]}";
     }
   }
 }

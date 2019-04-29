@@ -1,9 +1,11 @@
 html, body {
+    position: fix;
+    left: 0;
+    top: 0;
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden;
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     /*     color: #CCCCCC; */
 }
@@ -153,32 +155,87 @@ input[type=range]:active::-webkit-slider-thumb {
     color: #888888;
 }
 
-#uiManager{
+.verticalFlow {
+    display: flex;
+    flex-flow: column;
+}
+
+.horizontalFlow {
+    display: flex;
+    flex-flow: row;
+}
+
+#ui {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
     height: 100%;
+    width: 100%;
+
+    display: flex;
+    flex-flow: column;
     /*background-color: #2F2F2F;*/
 }
 
-.uiPageHeader {
+    #uiHeader {
+        background-color: #FF880088;
+        display: flex;
+        flex-flow: row;
+        padding: 0px 5px;
+    }
 
-}
+        .uiHeaderButton {
+            margin: 10px 5px 10px 5px;
+        }
 
-#topHeader {
+    #uiBody {
+        flex: 1;
 
-}
+        display: flex;
+        flex-flow: row;
+    }
 
-.uiPageContent {
+        #uiBodyContent {
+            flex: 3;
+        }
 
-}
+            .uiBodyContentPage {
+                height: 100%;
+                overflow-y: auto;
+                word-wrap: break-word;
+            }
 
-.topHeaderButton {
+            .uiBodyContentPageHeader {
 
-}
+            }
+
+            .uiBodyContentPageContent {
+            }
+
+
+        #uiBodyPane {
+            height: 100%;
+            flex: 1;
+            background-color: #FF880022;
+        }
 
 .form th,
 .form td {
     padding: 2px 2px;
+    border: none;
+}
+
+.listTable {
+    margin: auto;
+    text-align: center;
+}
+
+.listTable thead {
+    background-color: #FF880088;
+}
+
+.listTable td {
+    border: solid 4px #FFFFFF;
+    padding: 4px;
+    background-color: #FF880022;
 }

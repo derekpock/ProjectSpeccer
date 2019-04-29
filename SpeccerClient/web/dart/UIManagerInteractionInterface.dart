@@ -1,8 +1,14 @@
 
 import 'DBClient.dart';
 import 'UIPage.dart';
+import 'Structures/Project.dart';
+import 'Structures/Role.dart';
 
 abstract class UIManagerInteractionInterface {
+  void setActivePage(UIPage page);
+  DBClient getDBClient();
+
+  void refreshProjectsAndRoles();
   void userLoggedIn(String username, String password);
   String getAuthUsername();
   String getAuthPassword();
@@ -11,7 +17,7 @@ abstract class UIManagerInteractionInterface {
   void usernameTaken();
   void userLoggedOut();
   void badLogin();
-
-  void setActivePage(UIPage page);
-  DBClient getDBClient();
+  void newProjectCreated(Project p);
+  void receivedUpdatedProjects(List<Project> projects, Map<String, Role> roles);
+  void openProject(Project p);
 }

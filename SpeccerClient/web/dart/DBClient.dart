@@ -52,8 +52,8 @@ class DBClient {
               break;
           }
         })
-        .catchError((Object error) {
-          throw "An error occurred when making a request to the server. Details below:\n${error}";
-        });
+        .catchError((Object error, Object stacktrace) {
+          return Future<Null>.error("An error occurred when making a request to the server. Request: ${request.outData[DataElements.cmd]} Details below:\n${error}", stacktrace);
+        }); // SO this
   }
 }

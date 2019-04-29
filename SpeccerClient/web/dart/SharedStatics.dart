@@ -41,6 +41,7 @@ class DataElements {
   static const componentData = "componentData";
   static const comments = "comments";
   static const commentValue = "commentValue";
+  static const roles = "roles";
 
   static const roleCanView = "roleCanView";
   static const roleCanContribute = "roleCanContribute";
