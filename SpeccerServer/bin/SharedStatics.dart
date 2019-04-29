@@ -41,6 +41,7 @@ class DataElements {
   static const componentData = "componentData";
   static const comments = "comments";
   static const commentValue = "commentValue";
+  static const roles = "roles";
 
   static const roleCanView = "roleCanView";
   static const roleCanContribute = "roleCanContribute";
@@ -53,6 +54,7 @@ class DataElements {
   static const postgres_tableName = "postgres_tableName";
 
   static const error_object = "error_object";
+  static const error_stacktrace = "error_stacktrace";
 }
 
 class ErrorCodes {

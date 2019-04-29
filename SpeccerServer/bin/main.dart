@@ -88,7 +88,6 @@ void main(List<String> arguments) async {
       } catch (e3) {}
       print("Unsupported request: ${request.method}.");
     }
-    print("Waiting for next request...");
   }
 }
 
@@ -135,7 +134,7 @@ class Request {
         .catchError((_){});
   }
 
-  void _errorAttemptResponse(Object e) {
+  void _errorAttemptResponse(Object e, Object s) {
     try {
       if(e is PostgreSQLException) {
 //        _outData["columnName"] = e.columnName;
@@ -170,6 +169,7 @@ class Request {
           _response.statusCode = HttpStatus.notImplemented;
         }
       }
+      _outData[DataElements.error_stacktrace] = s.toString();
       _outData[DataElements.error_object] = e.toString();
     } catch (e2) {}
     print("Error occurred - attempting response with: $_outData");
@@ -240,7 +240,10 @@ class Request {
                   return "00000000-0000-0000-0000-000000000000";
                 }
               })
-              .then((Object uid) => _browseProjects(uid));
+              .then((Object uid) => 
+                  _browseProjects(uid)
+                  .then((_) => _getRoles(uid))
+              );
           break;
 
         case RequestCodes.componentGetAll:
@@ -508,10 +511,10 @@ class Request {
             // Get all public projects
             // Get all private projects where uid is a developer (owners are considered developers)
             _db.query(
-                "select distinct project.pid from public.project as project "
+                "select distinct project.pid, project.is_public from public.project as project "
                 "inner join public.role as role "
                 "on project.pid = role.pid "
-                "where ( project.is_public or ( role.uid = '@uid' and role.is_developer ) )",
+                "where ( project.is_public or role.uid = @uid )",
                 substitutionValues: {
                   "uid": uid
                 }
@@ -524,12 +527,21 @@ class Request {
               throw e;
             })
     ).then((List<List<dynamic>> data) {
-      if(data.length != 1) {
-        _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
-      } else {
-        _outData[DataElements.projects] = data[0];
-      }
+      _outData[DataElements.projects] = data;
     });
+  }
+
+  Future _getRoles(String uid) {
+    return
+      _db.query(
+          "select role.pid, role.is_owner, role.is_developer from public.role as role "
+          "where role.uid = @uid",
+          substitutionValues: {
+            "uid": uid
+          }
+      ).then((List<List<dynamic>> data) {
+        _outData[DataElements.roles] = data;
+      });
   }
 
   /// Verifies [uid] has legitimate roles to view [pid] from DB.
