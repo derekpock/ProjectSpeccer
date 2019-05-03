@@ -20,4 +20,5 @@ abstract class UIManagerInteractionInterface {
   void newProjectCreated(Project p);
   void receivedUpdatedProjects(List<Project> projects, Map<String, Role> roles);
   void openProject(Project p);
+  void addNavigation(String url);
 }

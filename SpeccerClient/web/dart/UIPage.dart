@@ -30,15 +30,15 @@ part 'UIPages/PageRegister.dart';
 class UIPage {
   UIManagerInteractionInterface _uimii;
 
+  String _headerText;
+  String _urlId;
   DivElement _element;
 
   HeadingElement _header;
   DivElement _content;
-
   bool hidden;
 
-  UIPage(UIManagerInteractionInterface uimii, bool hidden, String title) {
-    this.hidden = hidden;
+  UIPage(UIManagerInteractionInterface uimii, this.hidden, this._headerText, this._urlId) {
     _uimii = uimii;
 
     _element = new DivElement();
@@ -48,7 +48,7 @@ class UIPage {
     }
 
     _header = new HeadingElement.h2();
-    _header.setInnerHtml(title);
+    _header.setInnerHtml(_headerText);
     _header.classes.add(CSSClasses.uiBodyContentPageHeader);
 
     _content = new DivElement();
@@ -61,4 +61,25 @@ class UIPage {
   DivElement getElement() {
     return _element;
   }
+
+  String saveToUrl() {
+    return _urlId + _saveToUrlData();
+  }
+
+  String _saveToUrlData() {
+    return "";
+  }
+
+  bool loadFromUrl(String hash) {
+    if(!hidden && hash.startsWith(_urlId)) {
+      String urlData = hash.substring(_urlId.length);
+      _loadFromUrlData(urlData);
+      _uimii.setActivePage(this);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  void _loadFromUrlData(String data) {}
 }

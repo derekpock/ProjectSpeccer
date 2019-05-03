@@ -8,7 +8,7 @@ class PageBrowse extends UIPage {
   DivElement _butRefresh;
 
   PageBrowse(UIManagerInteractionInterface uimii) :
-        super(uimii, true, "Browse") {
+        super(uimii, true, "Browse Projects", "browse") {
     _butRefresh = new DivElement();
     _butRefresh.classes.add(CSSClasses.button);
     _butRefresh.classes.add(CSSClasses.clickable);

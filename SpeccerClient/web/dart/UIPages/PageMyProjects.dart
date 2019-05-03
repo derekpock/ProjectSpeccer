@@ -10,7 +10,7 @@ class PageMyProjects extends UIPage {
   DivElement _butNewPrivateProject;
 
   PageMyProjects(UIManagerInteractionInterface uimii) :
-        super(uimii, true, "My Projects") {
+        super(uimii, true, "My Projects", "my_projects") {
 
     _butNewPublicProject = new DivElement();
     _butNewPublicProject.classes.add(CSSClasses.button);

@@ -88,7 +88,6 @@ class UIManager implements UIManagerInteractionInterface {
     _butRegister = new TopHeaderButton("Register", () => setActivePage(_pageRegister));
     _butComments = new TopHeaderButton("Comments", () => toggleCommentsPane());
 
-
     // Add page header buttons to div.
     // PageProject does not have a button.
     _divUIHeader.append(_butHome.getElement());
@@ -121,8 +120,23 @@ class UIManager implements UIManagerInteractionInterface {
     _dbClient.setUimii(this);
     _dbClient.makeRequest(new RequestPing());
 
+    // Prepare event listeners.
+    window.onPopState.listen((PopStateEvent e) => loadPageFromHash());
+
     userLoggedOut();
     refreshProjectsAndRoles();
+    loadPageFromHash();
+  }
+
+  void loadPageFromHash() {
+    if(window.location.hash.isNotEmpty && window.location.hash[0] == '#') {
+      String hashlessHash = window.location.hash.substring(1);
+      _pagesWithContent.forEach((UIPage page) {
+        if(page.loadFromUrl(hashlessHash)) {
+          setActivePageWithoutHistory(page);
+        }
+      });
+    }
   }
 
   void updateProjectDependentPages() {
@@ -136,22 +150,28 @@ class UIManager implements UIManagerInteractionInterface {
     _divUIBodyPane.classes.toggle(CSSClasses.hidden);
   }
 
-  void refreshProjectsAndRoles() {
-    getDBClient().makeRequest(new RequestBrowseProjects(getAuthUsername(), getAuthPassword()));
-  }
-
-
-  DBClient getDBClient() {
-    return _dbClient;
-  }
-
-  void setActivePage(UIPage activePage) {
+  void setActivePageWithoutHistory(UIPage activePage) {
     _pagesWithContent.forEach((UIPage page) {
       if(page.hidden == (page == activePage)) {
         page.getElement().classes.toggle(CSSClasses.hidden);
         page.hidden = !page.hidden;
       }
     });
+  }
+
+  void refreshProjectsAndRoles() {
+    getDBClient().makeRequest(new RequestBrowseProjects(getAuthUsername(), getAuthPassword()));
+  }
+
+  DBClient getDBClient() {
+    return _dbClient;
+  }
+
+  void setActivePage(UIPage activePage) {
+    if(activePage.hidden) {
+      addNavigation(activePage.saveToUrl());
+    }
+    setActivePageWithoutHistory(activePage);
   }
 
   String getAuthPassword() {

@@ -13,7 +13,7 @@ class PageLogin extends UIPage {
   int _invalidLoginFromServer = 0;
 
   PageLogin(UIManagerInteractionInterface uimii) :
-        super(uimii, true, "Login") {
+        super(uimii, true, "Login", "login") {
 
     _username = new TextInputElement();
     _username.onInput.listen(_inputOnInput);

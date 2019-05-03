@@ -16,7 +16,6 @@ class RequestAddUser extends AbstractRequest {
     outData[DataElements.email] = email;
   }
 
-  @override
   void dataReceived(Map<String, dynamic> data, UIManagerInteractionInterface uimii) {
     switch(data[ERROR_CODE]) {
       case ErrorCodes.SoFarSoGood:

@@ -13,7 +13,6 @@ class RequestNewProject extends AbstractRequest {
     outData[DataElements.isPublic] = _isPublic;
   }
 
-  @override
   void dataReceived(Map<String, dynamic> data, UIManagerInteractionInterface uimii) {
     switch(data[ERROR_CODE]) {
       case ErrorCodes.SoFarSoGood:
