@@ -1,5 +1,5 @@
 html, body {
-    position: fix;
+    position: absolute;
     left: 0;
     top: 0;
     width: 100%;
@@ -190,7 +190,7 @@ input[type=range]:active::-webkit-slider-thumb {
 
     #uiBody {
         flex: 1;
-
+        height: 0;
         display: flex;
         flex-flow: row;
     }
