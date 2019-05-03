@@ -8,7 +8,7 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
   List<AbstractStage> _stages;
 
   PageProject(UIManagerInteractionInterface uimii) :
-        super(uimii, true, "Project", "project") {
+        super(uimii, true, true, "Project", "project") {
 
     _stages = new List();
     _stages.addAll([

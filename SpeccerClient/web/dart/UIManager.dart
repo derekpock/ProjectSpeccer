@@ -136,6 +136,8 @@ class UIManager implements UIManagerInteractionInterface {
           setActivePageWithoutHistory(page);
         }
       });
+    } else {
+      window.history.replaceState(null, "", "#" + _pageHome.saveToUrl());
     }
   }
 
@@ -194,6 +196,10 @@ class UIManager implements UIManagerInteractionInterface {
     _butMyProjects.setHidden(false);
     _butLogout.setHidden(false);
 
+    _pageRegister.enabled = false;
+    _pageLogin.enabled = false;
+    _pageMyProjects.enabled = true;
+
     refreshProjectsAndRoles();
 
     setActivePage(_pageHome);
@@ -213,6 +219,9 @@ class UIManager implements UIManagerInteractionInterface {
     _butMyProjects.setHidden(true);
     _butLogout.setHidden(true);
 
+    _pageRegister.enabled = true;
+    _pageLogin.enabled = true;
+    _pageMyProjects.enabled = false;
   }
 
   void pongReceived() {
@@ -251,5 +260,8 @@ class UIManager implements UIManagerInteractionInterface {
   void openProject(Project p) {
     _pageProject.openProject(p, _roles[p]);
     setActivePage(_pageProject);
+  }
+  void addNavigation(String url) {
+    window.history.pushState(null, "", "#" + url);
   }
 }

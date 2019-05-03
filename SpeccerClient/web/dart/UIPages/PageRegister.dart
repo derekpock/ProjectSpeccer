@@ -15,7 +15,7 @@ class PageRegister extends UIPage {
   int _invalidUserFromServer = 0;
 
   PageRegister(UIManagerInteractionInterface uimii) :
-        super(uimii, true, "Register", "register") {
+        super(uimii, true, true, "Register", "register") {
 
     _username = new TextInputElement();
     _username.onInput.listen(_usernameOnInput);

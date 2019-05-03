@@ -32,7 +32,6 @@ abstract class AbstractStage {
   }
 
   void _onBannerClick(_) {
-    print("clicked");
     ppii.setActiveStage(this);
   }
 

@@ -37,8 +37,9 @@ class UIPage {
   HeadingElement _header;
   DivElement _content;
   bool hidden;
+  bool enabled;
 
-  UIPage(UIManagerInteractionInterface uimii, this.hidden, this._headerText, this._urlId) {
+  UIPage(UIManagerInteractionInterface uimii, this.hidden, this.enabled, this._headerText, this._urlId) {
     _uimii = uimii;
 
     _element = new DivElement();
@@ -71,10 +72,9 @@ class UIPage {
   }
 
   bool loadFromUrl(String hash) {
-    if(!hidden && hash.startsWith(_urlId)) {
+    if(enabled && hash.startsWith(_urlId)) {
       String urlData = hash.substring(_urlId.length);
       _loadFromUrlData(urlData);
-      _uimii.setActivePage(this);
       return true;
     } else {
       return false;
