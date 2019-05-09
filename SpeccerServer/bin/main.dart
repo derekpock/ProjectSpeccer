@@ -93,6 +93,7 @@ void main(List<String> arguments) async {
 
 class Request {
 
+
   HttpRequest _request;
   HttpResponse _response;
 
@@ -110,9 +111,9 @@ class Request {
     _outData = new Map<String, dynamic>();
     _getClientDataString()
         .then((String stringData) => Map<String, dynamic>.from(jsonDecode(stringData)))
-        .then((Map<String, dynamic> inData) => _parseClientInfo(inData))
-        .then((_) => _closeRequest())
-        .catchError(_errorAttemptResponse)
+        .then((Map<String, dynamic> inData) =>
+            _parseClientInfo(inData)
+            .catchError(_errorAttemptResponse))
         .then((_) => _closeRequest())
         .catchError((e) {
           print("Error in attempt to respond after error. Hands are off: $e");
@@ -135,6 +136,7 @@ class Request {
   }
 
   void _errorAttemptResponse(Object e, Object s) {
+    print(e);
     try {
       if(e is PostgreSQLException) {
 //        _outData["columnName"] = e.columnName;
@@ -148,7 +150,7 @@ class Request {
         _outData[DataElements.postgres_error] = true;
         _outData[DataElements.postgres_code] = e.code;
         _outData[DataElements.postgres_constraintName] = e.constraintName;
-        _outData[DataElements.postgres_detail] = e.detail.replaceAll("\"", "'");
+        _outData[DataElements.postgres_detail] = e.detail;
         _outData[DataElements.postgres_tableName] = e.tableName;
 
         if(!_outData.containsKey(ERROR_CODE)) {
@@ -158,6 +160,9 @@ class Request {
           // Mark this as not implemented, because we need to implement handling
           // this error, even if its a simple error code set.
           _response.statusCode = HttpStatus.notImplemented;
+          _outData[DataElements.error_stacktrace] = s.toString();
+        } else if (_response.statusCode >= HttpStatus.internalServerError) {
+          _outData[DataElements.error_stacktrace] = s.toString();
         }
       } else {
         if(!_outData.containsKey(ERROR_CODE)) {
@@ -167,11 +172,15 @@ class Request {
           // Mark this as not implemented, because we need to implement handling
           // this error, even if its a simple error code set.
           _response.statusCode = HttpStatus.notImplemented;
+          _outData[DataElements.error_stacktrace] = s.toString();
+        } else if (_response.statusCode >= HttpStatus.internalServerError) {
+          _outData[DataElements.error_stacktrace] = s.toString();
         }
       }
-      _outData[DataElements.error_stacktrace] = s.toString();
       _outData[DataElements.error_object] = e.toString();
-    } catch (e2) {}
+    } catch (e2) {
+      print(e2);
+    }
     print("Error occurred - attempting response with: $_outData");
   }
 
@@ -233,29 +242,17 @@ class Request {
 
         case RequestCodes.browseProjects:
           f = _connectToDb()
-              .then((_) {
-                if(inData.containsKey(DataElements.username)) {
-                  return _authenticateUser(inData[DataElements.username], inData[DataElements.password]);
-                } else {
-                  return "00000000-0000-0000-0000-000000000000";
-                }
-              })
-              .then((Object uid) => 
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) =>
                   _browseProjects(uid)
-                  .then((_) => _getRoles(uid))
+                  .then((_) => _getRolesForUser(uid))
               );
           break;
 
         case RequestCodes.componentGetAll:
           f = _connectToDb()
-              .then((_) {
-                if(inData.containsKey(DataElements.username)) {
-                  return _authenticateUser(inData[DataElements.username], inData[DataElements.password]);
-                } else {
-                  return "00000000-0000-0000-0000-000000000000";
-                }
-              })
-              .then((Object uid) => _userIsObserver(uid, inData[DataElements.pid]))
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) => _userIsObserver(uid, inData[DataElements.pid]))
               .then((_) => _componentGetAll(inData[DataElements.pid]));
           break;
 
@@ -274,7 +271,8 @@ class Request {
                          inData[DataElements.componentData]
                       )
                   )
-              );
+              )
+              .then((_) => _componentGetAll(inData[DataElements.pid]));
           break;
 
         case RequestCodes.commentGetAll:
@@ -301,24 +299,36 @@ class Request {
               .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
               .then((String uid) =>
                   _userIsOwner(uid, inData[DataElements.pid])
-                  .then((_) =>
+                  .then((_) => _getUidFromUsername(inData[DataElements.targetUsername]))
+                  .then((String targetUid) =>
                       _roleSet(
                           uid,
-                          inData[DataElements.targetId],
+                          targetUid,
                           inData[DataElements.pid],
                           inData[DataElements.roleCanView],
                           inData[DataElements.roleCanContribute],
                           inData[DataElements.roleCanManage]
                       )
                   )
+                  .then((_) => _getAllRolesForPid(inData[DataElements.pid]))
               );
+          break;
+
+        case RequestCodes.roleGetAll:
+          f = _connectToDb()
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) => _userIsObserver(uid, inData[DataElements.pid]))
+              .then((_) => _getAllRolesForPid(inData[DataElements.pid]));
           break;
 
         case RequestCodes.setProjectPublicity:
           f = _connectToDb()
               .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
-              .then((String uid) => _userIsOwner(uid, inData[DataElements.pid]))
-              .then((_) => _changeProjectPublicity(inData[DataElements.pid], inData[DataElements.isPublic]));
+              .then((String uid) =>
+                  _userIsOwner(uid, inData[DataElements.pid])
+                  .then((_) => _changeProjectPublicity(inData[DataElements.pid], inData[DataElements.isPublic]))
+//                  .then((_) => _browseProjects(uid))
+              );
           break;
 
         default:
@@ -433,32 +443,59 @@ class Request {
   /// Adds [uid] to outData.
   /// Returns [uid].
   Future<String> _authenticateUser(String username, String password) {
-    return _db.query(
-        "SELECT passhash, uid FROM public.user WHERE name = @username",
-        substitutionValues: {
-          "username": username
-        }).then((List<List<dynamic>> query) {
-          if(query.length > 1) {
-            _markOut500Error(ErrorCodes.MultipleUsersFound);
-            throw "Multiple query items received from auth.";
-          } else if (query.isEmpty) {
-            _markOut200Error(ErrorCodes.WrongAuth);
-            throw "Wrong username or password.";
-          } else {
-            if(query.first.length != 2) {
-              _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
-              throw "Needed 2 items from from db in auth!";
-            } else {
-              String passhash = query.first[0];
-              String uid = query.first[1];
-              if(!dbcrypt.checkpw(password, passhash)) {
+    if(username == null && password == null) {
+      return Future<String>(() => "00000000-0000-0000-0000-000000000000");
+    } else {
+      return
+        _db.query(
+            "SELECT passhash, uid FROM public.user WHERE name = @username",
+            substitutionValues: {
+              "username": username
+            }).then((List<List<dynamic>> query) {
+              if(query.length > 1) {
+                _markOut500Error(ErrorCodes.MultipleUsersFound);
+                throw "Multiple query items received from auth.";
+              } else if (query.isEmpty) {
                 _markOut200Error(ErrorCodes.WrongAuth);
                 throw "Wrong username or password.";
               } else {
-                _outData[DataElements.uid] = uid;
-                return uid;
+                if(query.first.length != 2) {
+                  _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
+                  throw "Needed 2 items from from db in auth!";
+                } else {
+                  String passhash = query.first[0];
+                  String uid = query.first[1];
+                  if(!dbcrypt.checkpw(password, passhash)) {
+                    _markOut200Error(ErrorCodes.WrongAuth);
+                    throw "Wrong username or password.";
+                  } else {
+                    _outData[DataElements.uid] = uid;
+                    return uid;
+                  }
+                }
               }
-            }
+            });
+    }
+  }
+
+  /// Gets a uid for a given username from DB.
+  Future<String> _getUidFromUsername(String username) {
+    return _db.query(
+        "select u.uid from public.user as u where u.name = @name",
+        substitutionValues: {
+          "name": username
+        }).then((List<List<dynamic>> query) {
+          if(query.length != 1) {
+            _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
+            throw "No query items received when at least one column should be returned.";
+          } else if (query.first.isEmpty) {
+            _markOut200Error(ErrorCodes.NoUserFound);
+            throw "Could not find a user by that name.";
+          } else if (query.first.length > 1) {
+            _markOut500Error(ErrorCodes.MultipleUsersFound);
+            throw "Too many users match that name.";
+          } else {
+            return query.first.first;
           }
         });
   }
@@ -518,10 +555,10 @@ class Request {
             // Get all public projects
             // Get all private projects where uid is a developer (owners are considered developers)
             _db.query(
-                "select distinct project.pid, project.is_public from public.project as project "
-                "inner join public.role as role "
-                "on project.pid = role.pid "
-                "where ( project.is_public or role.uid = @uid )",
+                "select distinct p.pid, p.is_public from public.project as p "
+                "inner join public.role as r "
+                "on p.pid = r.pid "
+                "where ( p.is_public or r.uid = @uid )",
                 substitutionValues: {
                   "uid": uid
                 }
@@ -538,11 +575,26 @@ class Request {
     });
   }
 
-  Future _getRoles(String uid) {
+  Future _getAllRolesForPid(String pid) {
     return
       _db.query(
-          "select role.pid, role.is_owner, role.is_developer from public.role as role "
-          "where role.uid = @uid",
+          "select r.uid, r.pid, r.is_owner, r.is_developer, u.name from public.role as r "
+          "inner join public.user as u "
+          "on u.uid = r.uid "
+          "where r.pid = @pid",
+          substitutionValues: {
+            "pid": pid
+          }
+      ).then((List<List<dynamic>> data) {
+        _outData[DataElements.roles] = data;
+      });
+  }
+
+  Future _getRolesForUser(String uid) {
+    return
+      _db.query(
+          "select r.pid, r.is_owner, r.is_developer from public.role as r "
+          "where r.uid = @uid",
           substitutionValues: {
             "uid": uid
           }
@@ -556,11 +608,11 @@ class Request {
   Future _userIsObserver(String uid, String pid) {
     return
       _db.query(
-          "select distinct project.pid from public.project as project "
-          "inner join public.role as role "
-          "on project.pid = role.pid "
-          "where ( project.pid = '@pid' ) "
-          "and ( project.is_public or ( role.uid = '@uid' ) ) ",
+          "select distinct p.pid from public.project as p "
+          "inner join public.role as r "
+          "on p.pid = r.pid "
+          "where ( p.pid = @pid ) "
+          "and ( p.is_public or ( r.uid = @uid ) ) ",
           substitutionValues: {
             "pid": pid,
             "uid": uid
@@ -578,11 +630,11 @@ class Request {
   Future _userIsContributer(String uid, String pid) {
     return
       _db.query(
-          "select distinct project.pid from public.project as project "
-          "inner join public.role as role "
-          "on project.pid = role.pid "
-          "where ( project.pid = '@pid' ) "
-          "and ( role.uid = '@uid' and role.is_developer ) ",
+          "select distinct p.pid from public.project as p "
+          "inner join public.role as r "
+          "on p.pid = r.pid "
+          "where ( p.pid = @pid ) "
+          "and ( r.uid = @uid and r.is_developer ) ",
           substitutionValues: {
             "pid": pid,
             "uid": uid
@@ -600,11 +652,11 @@ class Request {
   Future _userIsOwner(String uid, String pid) {
     return
       _db.query(
-          "select distinct project.pid from public.project as project "
-          "inner join public.role as role "
-          "on project.pid = role.pid "
-          "where ( project.pid = '@pid' ) "
-          "and ( role.uid = '@uid' and role.is_owner ) ",
+          "select distinct p.pid from public.project as p "
+          "inner join public.role as r "
+          "on p.pid = r.pid "
+          "where ( p.pid = @pid ) "
+          "and ( r.uid = @uid and r.is_owner ) ",
           substitutionValues: {
             "pid": pid,
             "uid": uid
@@ -622,13 +674,16 @@ class Request {
   Future _componentGetAll(String pid) {
     return
       _db.query(
-          "select component.json from public.component as component "
-          "where component.pid = '@pid'",
+          "select c.cid, c.revision, c.pid, c.uid, c.date_created, c.type, c.data from public.component as c "
+          "where c.pid = @pid",
           substitutionValues: {
             "pid": pid
           }
       ).then((List<List<dynamic>> data) {
-          _outData[DataElements.components] = data;
+        data.forEach((List<dynamic> row) {
+          row[4] = (row[4] as DateTime).toIso8601String();
+        });
+        _outData[DataElements.components] = data;
       });
   }
 
@@ -639,8 +694,8 @@ class Request {
       _db.query(
           "insert into public.component "
           "values ( @cid, "
-            "coalesce((select max(component.revision) + 1 from public.component as component "
-            "where component.cid = @cid), 0), "
+            "coalesce((select max(c.revision) + 1 from public.component as c "
+            "where c.cid = @cid), 0), "
           "@pid, @uid, @date_created, @type, @data )",
           substitutionValues: {
             "cid": cid,
@@ -653,21 +708,12 @@ class Request {
       );
   }
 
-//  Future _commentIsViewable(String uid, String comment_id) {
-//    return Future(
-//        () =>
-//            _db.query(
-//
-//            )
-//    );
-//  }
-
   Future _commentGetAll(String id_target) {
     return Future(
         () =>
             _db.query(
-                "select comment.value, comment.date_created, comment.uid from public.comment as comment "
-                "where comment.id_target = '@target'",
+                "select o.value, o.date_created, o.uid from public.comment as o "
+                "where o.id_target = '@target'",
                 substitutionValues: {
                   "target": id_target
                 }
@@ -694,8 +740,8 @@ class Request {
   Future _userCanInteractComment(String uid, String target_id) {
     return
       _db.query(
-          "select identifier.type from public.identifier as identifier "
-          "where identifier.id = '@target_id'",
+          "select i.type from public.identifier as i "
+          "where i.id = @target_id",
           substitutionValues: {
             "target_id": target_id
           }

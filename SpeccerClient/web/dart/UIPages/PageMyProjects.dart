@@ -10,7 +10,7 @@ class PageMyProjects extends UIPage {
   DivElement _butNewPrivateProject;
 
   PageMyProjects(UIManagerInteractionInterface uimii) :
-        super(uimii, true, false, "My Projects", "my_projects") {
+        super(uimii, true, false, true, "My Projects", "my_projects") {
 
     _butNewPublicProject = new DivElement();
     _butNewPublicProject.classes.add(CSSClasses.button);
@@ -66,7 +66,7 @@ class PageMyProjects extends UIPage {
       row.addCell()
         ..setInnerHtml(p.getPid())
         ..classes.add(CSSClasses.clickable)
-        ..onClick.listen((_) => _uimii.openProject(p));
+        ..onClick.listen((_) => _uimii.openProject(p.getPid()));
       row.addCell()
         ..setInnerHtml(p.isPublic().toString());
     });

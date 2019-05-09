@@ -13,7 +13,7 @@ void main() {
 //    bool playOnly = (Uri.base.queryParameters.containsKey("mode") &&
 //        Uri.base.queryParameters["mode"] == "play");
 
-    querySelector("#output").text += " Dart running.";
+    print("Dart running.");
     initCoaop();
     new UIManager(new DBClient());
 

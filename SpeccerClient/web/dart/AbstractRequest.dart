@@ -4,8 +4,10 @@ import 'UIManagerInteractionInterface.dart';
 abstract class AbstractRequest {
 
   void addUserAuthData(String username, String password) {
-    outData[DataElements.username] = username;
-    outData[DataElements.password] = password;
+    if(username != null && password != null) {
+      outData[DataElements.username] = username;
+      outData[DataElements.password] = password;
+    }
   }
 
   Map<String, dynamic> outData;

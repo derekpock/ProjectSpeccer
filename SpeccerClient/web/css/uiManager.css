@@ -165,6 +165,11 @@ input[type=range]:active::-webkit-slider-thumb {
     flex-flow: row;
 }
 
+#output {
+  padding: 20px;
+  text-align: center;
+}
+
 #ui {
     position: absolute;
     left: 0;
@@ -249,6 +254,10 @@ input[type=range]:active::-webkit-slider-thumb {
 }
 
 .projectStage div:last-child {
-    height: 10px;
     background-color: #FF880033;
+}
+
+.waitContent {
+    text-align: center;
+    font-size: large;
 }

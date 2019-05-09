@@ -9,12 +9,12 @@ class RequestCodes {
   // User operations
   static const addUser = "addUser";
   static const createProject = "createProject";
-  static const browseProjects = "browseProjects";
+  static const browseProjects = "browseProjects";             // Returns visible projects and roles for uid.
 
   // Component operations
-  static const componentGetAll = "componentGetAll";
+  static const componentGetAll = "componentGetAll";           // Returns all components for project if visible
 //  static const componentGetRecent = "componentGetRecent";
-  static const componentAdd = "componentAdd";
+  static const componentAdd = "componentAdd";                 // Returns all components for project if visible
 //  static const componentUpdate = "componentUpdate";
 
   // Comment operations
@@ -23,6 +23,8 @@ class RequestCodes {
   static const commentAdd = "commentAddToId";
 
   static const roleSet = "roleSet";
+  static const roleGetAll = "roleGetAll";
+
   static const setProjectPublicity = "setProjectPublicity";
 }
 
@@ -35,6 +37,7 @@ class DataElements {
   static const pid = "pid";
   static const uid = "uid";
   static const targetId = "targetId";
+  static const targetUsername = "targetUsername";
 
   static const projects = "projects";
   static const components = "components";
@@ -86,6 +89,7 @@ class ErrorCodes {
   static const InvalidNewPassword = "InvalidNewPassword";
   static const WrongAuth = "WrongAuth";
   static const InvalidUidForNewProject = "InvalidUidForNewProject";
+  static const NoUserFound = "NoUserFound";
 
 }
 

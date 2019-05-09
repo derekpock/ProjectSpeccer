@@ -2,7 +2,10 @@ import 'dart:html';
 import 'CSSClasses.dart';
 import 'DBClient.dart';
 import 'DesignElements/TopHeaderButton.dart';
+import 'Requests/RequestGetComponents.dart';
+import 'Requests/RequestGetRoles.dart';
 import 'Requests/RequestPing.dart';
+import 'Structures/Component.dart';
 import 'UIManagerInteractionInterface.dart';
 import 'UIPage.dart';
 import 'Structures/Role.dart';
@@ -38,9 +41,15 @@ class UIManager implements UIManagerInteractionInterface {
 
   String _authUsername;
   String _authPass;
+  String _uid;
 
   Map<String, Role> _roles;
-  List<Project> _projects;
+  Map<String, Project> _projects;
+
+  List<Role> _awaitedProjectRoles;
+  String _awaitingProject;
+  bool _firstPull;
+  bool _contentAdded;
 
   UIManager(DBClient dbClient) {
     _divUI = document.getElementById("ui");
@@ -109,11 +118,10 @@ class UIManager implements UIManagerInteractionInterface {
     _divUIBody.append(_divUIBodyContent);
     _divUIBody.append(_divUIBodyPane);
 
-    _divUI.append(_divUIHeader);
-    _divUI.append(_divUIBody);
-
     // Prepare data elements.
-    _projects = new List();
+    _contentAdded = false;
+    _firstPull = true;
+    _projects = new Map();
     _roles = new Map();
 
     _dbClient = dbClient;
@@ -125,14 +133,14 @@ class UIManager implements UIManagerInteractionInterface {
 
     userLoggedOut();
     refreshProjectsAndRoles();
-    loadPageFromHash();
   }
 
   void loadPageFromHash() {
     if(window.location.hash.isNotEmpty && window.location.hash[0] == '#') {
       String hashlessHash = window.location.hash.substring(1);
       _pagesWithContent.forEach((UIPage page) {
-        if(page.loadFromUrl(hashlessHash)) {
+        if(!(page.needsProjectSustenance() && _firstPull) && page.loadFromUrl(hashlessHash)) {
+          _firstPull = false;
           setActivePageWithoutHistory(page);
         }
       });
@@ -144,7 +152,8 @@ class UIManager implements UIManagerInteractionInterface {
   void updateProjectDependentPages() {
     _pageBrowse.refresh(_projects, _roles);
     _pageMyProjects.refresh(
-        _projects.where((Project p) => _roles.containsKey(p.getPid()) && _roles[p.getPid()].isOwner()).toList()
+        _projects.values.where((Project p) =>
+            _roles.containsKey(p.getPid()) && _roles[p.getPid()].isOwner()).toList()
     );
   }
 
@@ -184,9 +193,10 @@ class UIManager implements UIManagerInteractionInterface {
     return _authUsername;
   }
 
-  void userLoggedIn(String username, String password) {
+  void userLoggedIn(String username, String password, String uid) {
     _authUsername = username;
     _authPass = password;
+    _uid = uid;
 
     _pageRegister.reset();
     _pageLogin.reset();
@@ -225,6 +235,11 @@ class UIManager implements UIManagerInteractionInterface {
   }
 
   void pongReceived() {
+    if(!_contentAdded) {
+      _divUI.append(_divUIHeader);
+      _divUI.append(_divUIBody);
+      _contentAdded = true;
+    }
     querySelector("#output").text += " Response received from server.";
   }
 
@@ -243,25 +258,79 @@ class UIManager implements UIManagerInteractionInterface {
   }
 
   void newProjectCreated(Project p) {
-    _projects.add(p);
-    _roles[p.getPid()] = new Role(p.getPid(), true, true);
+    _projects[p.getPid()] = p;
+    _roles[p.getPid()] = new Role(getAuthPassword(), getUid(), p.getPid(), true, true);
 
     updateProjectDependentPages();
   }
 
-  void receivedUpdatedProjects(List<Project> projects, Map<String, Role> roles) {
+  void receivedUpdatedProjects(List<dynamic> rawProjects, List<dynamic> rawRoles) {
     //TODO check if anything changed instead of always setting and refreshing
-    _roles = roles;
-    _projects = projects;
+    _projects.clear();
+    _roles.clear();
+
+    rawProjects.forEach((dynamic projInfo) {
+      projInfo = projInfo as List<dynamic>;
+      _projects[projInfo[0]] = new Project(projInfo[0], projInfo[1]);
+    });
+
+    rawRoles.forEach((dynamic roleInfo) {
+      roleInfo = roleInfo as List<dynamic>;
+      _roles[roleInfo[0]] = new Role(getAuthUsername(), getUid(), roleInfo[0], roleInfo[1], roleInfo[2]);
+    });
+
+    updateProjectDependentPages();
+    if(_firstPull) {
+      _firstPull = false;
+      loadPageFromHash();
+    }
+  }
+
+  void openProject(String pid) {
+    _awaitingProject = pid;
+    _pageProject.openProject(_projects[pid], _roles[pid]);
+    setActivePage(_pageProject);
+    getDBClient().makeRequest(new RequestGetComponents(getAuthUsername(), getAuthPassword(), pid));
+    getDBClient().makeRequest(new RequestGetRoles(getAuthUsername(), getAuthPassword(), pid));
+    //TODO waiting for components
+  }
+
+  void updatedProjectPublicity(String pid, bool isPublic) {
+    Project p = new Project(pid, isPublic);
+    _projects[pid] = p;
+    _pageProject.openProject(p, _roles[p.getPid()]);
 
     updateProjectDependentPages();
   }
 
-  void openProject(Project p) {
-    _pageProject.openProject(p, _roles[p]);
-    setActivePage(_pageProject);
-  }
   void addNavigation(String url) {
     window.history.pushState(null, "", "#" + url);
+  }
+
+  void receivedComponents(String pid, List<List<Component>> components) {
+    _pageProject.refreshComponents(pid, components);
+    _awaitingProject = null;
+    if(_awaitedProjectRoles != null) {
+      _pageProject.refreshProjectRoles(pid, _awaitedProjectRoles);
+      _awaitedProjectRoles = null;
+    }
+  }
+
+  void receivedProjectRoles(String pid, List<Role> roles) {
+    if(_awaitingProject != null) {
+      if(_awaitingProject == pid) {
+        _awaitedProjectRoles = roles;
+      }
+    } else {
+      _pageProject.refreshProjectRoles(pid, roles);
+    }
+  }
+
+  void receivedSetRoleFailed() {
+    _pageProject.receivedSetRoleFailed();
+  }
+
+  String getUid() {
+    return _uid;
   }
 }

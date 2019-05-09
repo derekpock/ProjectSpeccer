@@ -18,7 +18,7 @@ class RequestLogin extends AbstractRequest {
   void dataReceived(Map<String, dynamic> data, UIManagerInteractionInterface uimii) {
     switch(data[ERROR_CODE]) {
       case ErrorCodes.SoFarSoGood:
-        uimii.userLoggedIn(_username, _password);
+        uimii.userLoggedIn(_username, _password, data[DataElements.uid]);
         break;
       case ErrorCodes.WrongAuth:
         uimii.userLoggedOut();

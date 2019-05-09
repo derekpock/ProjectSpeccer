@@ -15,4 +15,5 @@ class CSSClasses {
   static const uiBodyContentPageContent = "uiBodyContentPageContent";
 
   static const projectStage = "projectStage";
+  static const maskContent = "waitContent";
 }

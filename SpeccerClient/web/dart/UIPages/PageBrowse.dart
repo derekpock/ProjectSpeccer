@@ -8,7 +8,7 @@ class PageBrowse extends UIPage {
   DivElement _butRefresh;
 
   PageBrowse(UIManagerInteractionInterface uimii) :
-        super(uimii, true, true, "Browse Projects", "browse") {
+        super(uimii, true, true, true, "Browse Projects", "browse") {
     _butRefresh = new DivElement();
     _butRefresh.classes.add(CSSClasses.button);
     _butRefresh.classes.add(CSSClasses.clickable);
@@ -31,7 +31,7 @@ class PageBrowse extends UIPage {
     _content.append(_projects);
   }
 
-  void refresh(List<Project> projects, Map<String, Role> roles) {
+  void refresh(Map<String, Project> projects, Map<String, Role> roles) {
     while(_projects.childNodes.isNotEmpty) {
       _projects.childNodes.first.remove();
     }
@@ -48,12 +48,12 @@ class PageBrowse extends UIPage {
       ..setInnerHtml("Developer");
 
     TableSectionElement bodySection = _projects.createTBody();
-    projects.forEach((Project p) {
+    projects.forEach((String k, Project p) {
       TableRowElement row = bodySection.addRow();
       row.addCell()
         ..setInnerHtml(p.getPid())
         ..classes.add(CSSClasses.clickable)
-        ..onClick.listen((_) => _uimii.openProject(p));
+        ..onClick.listen((_) => _uimii.openProject(p.getPid()));
       row.addCell()
         ..setInnerHtml(p.isPublic().toString());
 

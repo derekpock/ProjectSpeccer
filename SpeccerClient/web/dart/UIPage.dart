@@ -2,15 +2,21 @@ library UIPage;
 
 import 'dart:html';
 import 'CSSClasses.dart';
+
 import 'UIManagerInteractionInterface.dart';
-import 'DesignElements/Form.dart';
+import 'UIPages/PageProjectInteractionInterface.dart';
+
+import 'Structures/Project.dart';
+import 'Structures/Role.dart';
+import 'Structures/Component.dart';
+
 import 'Requests/RequestAddUser.dart';
 import 'Requests/RequestLogin.dart';
 import 'Requests/RequestNewProject.dart';
-import 'Structures/Project.dart';
-import 'Structures/Role.dart';
+import 'Requests/RequestAddComponent.dart';
+
+import 'DesignElements/Form.dart';
 import 'DesignElements/AbstractStage.dart';
-import 'UIPages/PageProjectInteractionInterface.dart';
 
 import 'DesignElements/Stages/StageAccessibility.dart';
 import 'DesignElements/Stages/StageDesign.dart';
@@ -38,8 +44,9 @@ class UIPage {
   DivElement _content;
   bool hidden;
   bool enabled;
+  bool _needsProjectSustenance;
 
-  UIPage(UIManagerInteractionInterface uimii, this.hidden, this.enabled, this._headerText, this._urlId) {
+  UIPage(UIManagerInteractionInterface uimii, this.hidden, this.enabled, this._needsProjectSustenance, this._headerText, this._urlId) {
     _uimii = uimii;
 
     _element = new DivElement();
@@ -64,22 +71,39 @@ class UIPage {
   }
 
   String saveToUrl() {
-    return _urlId + _saveToUrlData();
+    StringBuffer b = new StringBuffer();
+    b.write(_urlId);
+    Map<String, String> saveData = _saveToUrlData();
+    saveData.forEach((String k, String v) {
+      b.write("?$k=$v");
+    });
+    return b.toString();
   }
 
-  String _saveToUrlData() {
-    return "";
+  Map<String, String> _saveToUrlData() {
+    return new Map();
   }
 
   bool loadFromUrl(String hash) {
     if(enabled && hash.startsWith(_urlId)) {
       String urlData = hash.substring(_urlId.length);
-      _loadFromUrlData(urlData);
+      Map<String, String> saveData = new Map();
+      urlData.split("?").forEach((String arg) {
+        List<String> parts = arg.split("=");
+        if(parts.length == 2) {
+          saveData[parts[0]] = parts[1];
+        }
+      });
+      _loadFromUrlData(saveData);
       return true;
     } else {
       return false;
     }
   }
 
-  void _loadFromUrlData(String data) {}
+  void _loadFromUrlData(Map<String, String> data) {}
+
+  bool needsProjectSustenance() {
+    return _needsProjectSustenance;
+  }
 }
