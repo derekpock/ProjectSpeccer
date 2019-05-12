@@ -16,7 +16,7 @@ class RequestBrowseProjects extends AbstractRequest {
   void dataReceived(Map<String, dynamic> data, UIManagerInteractionInterface uimii) {
     switch(data[ERROR_CODE]) {
       case ErrorCodes.SoFarSoGood:
-        uimii.receivedUpdatedProjects(data[DataElements.projects], data[DataElements.roles]);
+        uimii.receivedUpdatedProjects(data[DataElements.projectsAndRoles]);
         break;
       default:
         throw "Error browsing projects from server: ${data[ERROR_CODE]}";

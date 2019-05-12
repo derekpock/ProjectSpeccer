@@ -82,7 +82,8 @@ class Component {
   /// Create a brand new component.
   /// Only generally used when a project is being created for the first time.
   /// This is not editable.
-  Component.newBase(this._cid, this._pid, this._uid, this._type) :
+  Component.newBase(this._pid, this._uid, this._type) :
+        _cid = "00000000-0000-0000-0000-000000000000",
         _revision = 0,
         _dateCreated = DateTime.now(),
         _data = new Map(),
@@ -115,8 +116,10 @@ class Component {
   /// is already uploaded) will throw an error - don't do it!.
   void addDataElement(String key, dynamic value) {
     if(_editable) {
-      _data[key] = value;
-      _dirty = true;
+      if(_data[key] != value) {
+        _data[key] = value;
+        _dirty = true;
+      }
     } else {
       throw "Attempted to add data elements to an uneditable component!";
     }
@@ -141,6 +144,7 @@ class Component {
   bool writeIfDirty(Map<String, dynamic> outData) {
     if(_dirty && _editable) {
       outData[DataElements.pid] = _pid;
+      outData[DataElements.cid] = _cid;
       outData[DataElements.componentType] = _type;
       outData[DataElements.componentData] = jsonEncode(_data);
       _dirty = false;
@@ -178,4 +182,5 @@ class Component {
 
 class ComponentTypes {
   static const ProjectName = 1;
+  static const ProjectDescription = 2;
 }

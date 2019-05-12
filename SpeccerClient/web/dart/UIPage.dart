@@ -32,6 +32,7 @@ part 'UIPages/PageLogin.dart';
 part 'UIPages/PageMyProjects.dart';
 part 'UIPages/PageProject.dart';
 part 'UIPages/PageRegister.dart';
+part 'UIPages/PageError.dart';
 
 class UIPage {
   UIManagerInteractionInterface _uimii;

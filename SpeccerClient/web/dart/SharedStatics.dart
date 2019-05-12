@@ -13,9 +13,8 @@ class RequestCodes {
 
   // Component operations
   static const componentGetAll = "componentGetAll";           // Returns all components for project if visible
-//  static const componentGetRecent = "componentGetRecent";
+  static const componentGetRecent = "componentGetRecent";
   static const componentAdd = "componentAdd";                 // Returns all components for project if visible
-//  static const componentUpdate = "componentUpdate";
 
   // Comment operations
   static const commentGetAll = "commentGetAllForId";
@@ -36,10 +35,11 @@ class DataElements {
   static const isPublic = "isPublic";
   static const pid = "pid";
   static const uid = "uid";
+  static const cid = "cid";
   static const targetId = "targetId";
   static const targetUsername = "targetUsername";
 
-  static const projects = "projects";
+  static const projectsAndRoles = "projects";
   static const components = "components";
   static const componentType = "componentType";
   static const componentData = "componentData";

@@ -1,4 +1,5 @@
 import 'dart:html';
+import 'dart:convert';
 import 'CSSClasses.dart';
 import 'DBClient.dart';
 import 'DesignElements/TopHeaderButton.dart';
@@ -24,6 +25,7 @@ class UIManager implements UIManagerInteractionInterface {
   PageMyProjects _pageMyProjects;
   PageProject    _pageProject;
   PageRegister   _pageRegister;
+  PageError      _pageError;
 
   TopHeaderButton _butBrowse;
   TopHeaderButton _butHome;
@@ -73,6 +75,7 @@ class UIManager implements UIManagerInteractionInterface {
     _pageMyProjects = new PageMyProjects(this);
     _pageProject = new PageProject(this);
     _pageRegister = new PageRegister(this);
+    _pageError = new PageError(this);
 
     // Add pages with content to list.
     _pagesWithContent = new List();
@@ -82,6 +85,7 @@ class UIManager implements UIManagerInteractionInterface {
     _pagesWithContent.add(_pageMyProjects);
     _pagesWithContent.add(_pageProject);
     _pagesWithContent.add(_pageRegister);
+    _pagesWithContent.add(_pageError);
 
     // Add page content to div.
     _pagesWithContent.forEach((UIPage page) {
@@ -139,7 +143,9 @@ class UIManager implements UIManagerInteractionInterface {
     if(window.location.hash.isNotEmpty && window.location.hash[0] == '#') {
       String hashlessHash = window.location.hash.substring(1);
       _pagesWithContent.forEach((UIPage page) {
-        if(!(page.needsProjectSustenance() && _firstPull) && page.loadFromUrl(hashlessHash)) {
+        if(!(page.needsProjectSustenance() && _firstPull) &&
+            page.loadFromUrl(hashlessHash) &&
+            page != _pageError) {
           _firstPull = false;
           setActivePageWithoutHistory(page);
         }
@@ -264,19 +270,45 @@ class UIManager implements UIManagerInteractionInterface {
     updateProjectDependentPages();
   }
 
-  void receivedUpdatedProjects(List<dynamic> rawProjects, List<dynamic> rawRoles) {
+  /*
+
+  pid	is_public	is_owner	is_developer	data
+
+   */
+  void receivedUpdatedProjects(List<dynamic> rawProjectQuery) {
+    // 0 pid
+    // 1 is_public
+    // 2 is_owner
+    // 3 is_developer
+    // 4 data
+
     //TODO check if anything changed instead of always setting and refreshing
     _projects.clear();
     _roles.clear();
 
-    rawProjects.forEach((dynamic projInfo) {
+    rawProjectQuery.forEach((dynamic projInfo) {
       projInfo = projInfo as List<dynamic>;
-      _projects[projInfo[0]] = new Project(projInfo[0], projInfo[1]);
-    });
+      String name;
+      if(projInfo[4] != null) {
+        Map<String, dynamic> jsonData = jsonDecode(projInfo[4]);
+        name = jsonData["name"];
+      }
+      if(name == null || name.isEmpty) {
+        name = "[project not named]";
+      }
 
-    rawRoles.forEach((dynamic roleInfo) {
-      roleInfo = roleInfo as List<dynamic>;
-      _roles[roleInfo[0]] = new Role(getAuthUsername(), getUid(), roleInfo[0], roleInfo[1], roleInfo[2]);
+      _projects[projInfo[0]] = new Project(projInfo[0], projInfo[1], name);
+      bool isOwner = projInfo[2];
+      bool isDeveloper = projInfo[3];
+
+      if(isOwner == null) {
+        isOwner = false;
+      }
+
+      if(isDeveloper == null) {
+        isDeveloper = false;
+      }
+      _roles[projInfo[0]] = new Role(getAuthUsername(), getUid(), projInfo[0], isOwner, isDeveloper);
     });
 
     updateProjectDependentPages();
@@ -295,8 +327,8 @@ class UIManager implements UIManagerInteractionInterface {
     //TODO waiting for components
   }
 
-  void updatedProjectPublicity(String pid, bool isPublic) {
-    Project p = new Project(pid, isPublic);
+  void updatedProject(String pid, bool isPublic, String name) {
+    Project p = new Project(pid, isPublic, name);
     _projects[pid] = p;
     _pageProject.openProject(p, _roles[p.getPid()]);
 
@@ -332,5 +364,10 @@ class UIManager implements UIManagerInteractionInterface {
 
   String getUid() {
     return _uid;
+  }
+
+  void authenticationError() {
+    _pageError.setError(PageErrorTypes.NotAuthorized);
+    setActivePage(_pageError);
   }
 }

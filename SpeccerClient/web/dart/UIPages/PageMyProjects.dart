@@ -52,7 +52,7 @@ class PageMyProjects extends UIPage {
     TableSectionElement headerSection = _projects.createTHead();
     TableRowElement headerRow = headerSection.addRow();
     headerRow.addCell()
-      ..setInnerHtml("Project ID");
+      ..setInnerHtml("Project Name");
     headerRow.addCell()
       ..setInnerHtml("Public");
 //    headerRow.addCell()
@@ -64,7 +64,7 @@ class PageMyProjects extends UIPage {
     projects.forEach((Project p) {
       TableRowElement row = bodySection.addRow();
       row.addCell()
-        ..setInnerHtml(p.getPid())
+        ..append(new Text(p.getName()))
         ..classes.add(CSSClasses.clickable)
         ..onClick.listen((_) => _uimii.openProject(p.getPid()));
       row.addCell()

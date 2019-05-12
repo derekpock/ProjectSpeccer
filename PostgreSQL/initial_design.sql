@@ -32,6 +32,7 @@ ALTER TABLE ONLY public."user" DROP CONSTRAINT user_name_key;
 ALTER TABLE ONLY public.role DROP CONSTRAINT role_pkey;
 ALTER TABLE ONLY public.project DROP CONSTRAINT project_pkey;
 ALTER TABLE ONLY public.identifier DROP CONSTRAINT identifiers_pkey;
+ALTER TABLE ONLY public.component DROP CONSTRAINT component_revision_pid_type_key;
 ALTER TABLE ONLY public.component DROP CONSTRAINT component_pkey;
 ALTER TABLE ONLY public.comment DROP CONSTRAINT comment_pkey;
 DROP TABLE public."user";
@@ -183,6 +184,14 @@ ALTER TABLE ONLY public.comment
 
 ALTER TABLE ONLY public.component
     ADD CONSTRAINT component_pkey PRIMARY KEY (cid, revision);
+
+
+--
+-- Name: component component_revision_pid_type_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.component
+    ADD CONSTRAINT component_revision_pid_type_key UNIQUE (revision, pid, type);
 
 
 --

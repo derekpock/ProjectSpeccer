@@ -14,10 +14,16 @@ class DBClient {
   }
 
   void makeRequest(AbstractRequest request) {
+    if(request.abort) {
+      return;
+    }
     request.outData["coaop"] = coaop;
     JsonHttpRequest
         .makeRequest(request.outData)
         .then((inData) {
+          if(request.abort) {
+            return;
+          }
           String apiErrorCode = inData[ERROR_CODE];
           int httpErrorCode = inData[JsonHttpRequest.jsonHttpRequestStatus];
 
@@ -26,6 +32,16 @@ class DBClient {
               request.dataReceived(inData, _uimii);
               break;
 
+            case HttpStatus.badRequest:
+              switch(apiErrorCode) {
+                case ErrorCodes.OperationNotAuthorized:
+                  _uimii.authenticationError();
+                  break;
+                default:
+                  throw "A manageable bad request was made to the server: $apiErrorCode";
+                  break;
+              }
+              break;
             case HttpStatus.methodNotAllowed:
               throw "Invalid request sent to server: $apiErrorCode";
               break;

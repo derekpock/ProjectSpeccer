@@ -3,19 +3,39 @@ import 'dart:html';
 import 'dart:async';
 import 'dart/UIManager.dart';
 import 'dart/config.dart';
+import 'dart:js';
+import 'dart:convert';
 
 void main() {
   // The entire project is run wrapped in a "zone" to catch asynchronous
   // exceptions. Upon exception, the user will be displayed an error message.
   bool showingError = false;
   runZoned(() {
-//    window.localStorage["disableAutosave"] = JSON.encode(false);
 //    bool playOnly = (Uri.base.queryParameters.containsKey("mode") &&
 //        Uri.base.queryParameters["mode"] == "play");
 
     print("Dart running.");
     initCoaop();
-    new UIManager(new DBClient());
+    if(window.localStorage.containsKey("debug")) {
+      context["debug"] = jsonDecode(window.localStorage["debug"]);
+    } else {
+      context["debug"] = false;
+
+      // Using asserts because they are ignored (tree-shaken) in production.
+      // We only want to set debug default value to true in development.
+      assert(() {
+        context["debug"] = true;
+        return true;
+      }());
+    }
+
+    window.onBeforeUnload.listen((_) {
+      window.localStorage["debug"] = jsonEncode(context["debug"]);
+    });
+
+    if(wantToGraduate) {
+      new UIManager(new DBClient());
+    }
 
     // By this point, everything is loaded, and we can remove the loading
     // screen and reset the cursor to default.
@@ -96,3 +116,5 @@ void main() {
     continueButton.style.marginLeft = "calc((100% - ${continueButton.offsetWidth}px) / 2)";
   });
 }
+
+bool wantToGraduate = DateTime.now().isBefore(DateTime(2029, 05, 18));

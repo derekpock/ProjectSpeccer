@@ -9,6 +9,7 @@ abstract class PageProjectInteractionInterface {
   Project getProject();
   Role getRole();
   void addComponent(Component newComponent);
+  void addRevisionWithOneItem(int type, String key, dynamic value);
   Component getNewRevision(int type);
   Component getLiveComponent(int type);
 }

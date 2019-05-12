@@ -20,14 +20,14 @@ abstract class UIManagerInteractionInterface {
   void userLoggedOut();
   void badLogin();
   void newProjectCreated(Project p);
-  void receivedUpdatedProjects(List<dynamic> rawProjects, List<dynamic> rawRoles);
+  void receivedUpdatedProjects(List<dynamic> rawProjects);
   void openProject(String pid);
   void addNavigation(String url);
 
-  void updatedProjectPublicity(String pid, bool isPublic);
+  void updatedProject(String pid, bool isPublic, String name);
   void receivedComponents(String pid, List<List<Component>> components);
   void receivedProjectRoles(String pid, List<Role> roles);
 
   void receivedSetRoleFailed();
-
+  void authenticationError();
 }

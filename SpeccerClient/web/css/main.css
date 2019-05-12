@@ -41,7 +41,12 @@ fieldset {
 }
 
 textarea {
+    width: calc(100% - 2px);
     resize: vertical;
+}
+
+input {
+    width: 100%;
 }
 
 .browserupgrade {

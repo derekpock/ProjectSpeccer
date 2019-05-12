@@ -12,7 +12,8 @@ class RequestAddComponent extends AbstractRequest {
         super(RequestCodes.componentAdd) {
     addUserAuthData(username, password);
     if(!component.writeIfDirty(outData)) {
-      print("A clean component was sent!");
+      print("A clean component was not sent!");
+      abort = true;
     }
   }
 

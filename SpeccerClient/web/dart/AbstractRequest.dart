@@ -3,6 +3,8 @@ import 'UIManagerInteractionInterface.dart';
 
 abstract class AbstractRequest {
 
+  bool abort;
+
   void addUserAuthData(String username, String password) {
     if(username != null && password != null) {
       outData[DataElements.username] = username;
@@ -13,7 +15,8 @@ abstract class AbstractRequest {
   Map<String, dynamic> outData;
 
   AbstractRequest(String cmd) :
-        outData = new Map() {
+        outData = new Map(),
+        abort = false {
     outData[DataElements.cmd] = cmd;
   }
 

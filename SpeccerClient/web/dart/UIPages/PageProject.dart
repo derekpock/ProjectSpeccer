@@ -56,7 +56,7 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
 
   void _loadFromUrlData(Map<String, String> saveData) {
     String pid = saveData["pid"];
-    if(pid != null) {
+    if(pid != null && pid != "null") {
       _uimii.openProject(saveData["pid"]);
       _activeId = int.tryParse(saveData["stage"]);
       if(_activeId == null) {
@@ -163,7 +163,7 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
         _c.add(new List());
       }
       if(_c[type].isEmpty) {
-        return new Component.newBase("", _p.getPid(), _uimii.getUid(), type);
+        return new Component.newBase(_p.getPid(), _uimii.getUid(), type);
       } else {
         return _c[type].last;
       }
@@ -200,5 +200,9 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
 
   Component getNewRevision(int type) {
     return new Component.newRevision(getLiveComponent(type), _uimii.getUid());
+  }
+
+  void addRevisionWithOneItem(int type, String key, dynamic value) {
+    addComponent(getNewRevision(type)..addDataElement(key, value));
   }
 }

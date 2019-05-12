@@ -36,7 +36,7 @@ class StageAccessibility extends AbstractStage {
       uimii.getDBClient().makeRequest(new RequestChangeProjectPublicity(
           uimii.getAuthUsername(),
           uimii.getAuthPassword(),
-          ppii.getProject().getPid(),
+          ppii.getProject(),
           !ppii.getProject().isPublic()
       ));
     });

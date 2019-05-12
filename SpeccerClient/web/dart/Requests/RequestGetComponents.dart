@@ -11,7 +11,7 @@ class RequestGetComponents extends AbstractRequest {
   /// Username and password can be null to request components of a public
   /// project.
   RequestGetComponents(String username, String password, this._pid) :
-        super(RequestCodes.componentGetAll) {
+        super(RequestCodes.componentGetRecent) {
     addUserAuthData(username, password);
     outData[DataElements.pid] = _pid;
   }

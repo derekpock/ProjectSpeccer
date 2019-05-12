@@ -16,7 +16,7 @@ class RequestNewProject extends AbstractRequest {
   void dataReceived(Map<String, dynamic> data, UIManagerInteractionInterface uimii) {
     switch(data[ERROR_CODE]) {
       case ErrorCodes.SoFarSoGood:
-        uimii.newProjectCreated(new Project(data[DataElements.pid], _isPublic));
+        uimii.newProjectCreated(new Project(data[DataElements.pid], _isPublic, "[new project]"));
         break;
       default:
         throw "Error creating new project on server: ${data[ERROR_CODE]}";

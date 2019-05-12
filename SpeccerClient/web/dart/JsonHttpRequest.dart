@@ -2,6 +2,7 @@
 import 'dart:html';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:js';
 
 class JsonHttpRequest {
   static const jsonHttpRequestStatus = "jsonHttpRequestStatus";
@@ -42,9 +43,9 @@ class JsonHttpRequest {
       _request.onError.listen(_onError);
       _request.open("POST", _URL, async: true);
       _request.send(jsonEncode(data));
-      print("Sent $data to $_URL");
+      dprint("Sent $data to $_URL");
     } catch (e) {
-      print("Exception during send operation: $e");
+      dprint("Exception during send operation: $e");
       _completer?.completeError("Exception during send operation: $e");
       _completer = null;
       _request = null;
@@ -59,14 +60,14 @@ class JsonHttpRequest {
         inData = jsonDecode(_request.response);
         inData[jsonHttpRequestStatus] = _request.status;
         if (_request.status == HttpStatus.ok) {
-          print("Received: ${inData}");
+          dprint("Received: ${inData}");
           _completer?.complete(inData);
         } else {
-          print("Error received: status ${_request.status} with response ${_request.response}");
+          dprint("Error received: status ${_request.status} with response ${_request.response}");
           _completer?.complete(inData);
         }
       } catch (e) {
-        print("Error parsing received: status ${_request.status} with response ${_request.response} and error $e");
+        dprint("Error parsing received: status ${_request.status} with response ${_request.response} and error $e");
         _completer?.completeError("Invalid json response from server: status ${_request.status} with response ${_request.response} and error $e");
       } finally {
         _request = null;
@@ -76,9 +77,15 @@ class JsonHttpRequest {
   }
 
   void _onError(_) {
-    print("Error mid-request: status ${_request.status} with response ${_request.response}");
+    dprint("Error mid-request: status ${_request.status} with response ${_request.response}");
     _completer?.completeError("Error mid request: status ${_request.status} with response ${_request.response}");
     _completer = null;
     _request = null;
+  }
+  
+  void dprint(Object object) {
+    if(context["debug"]) {
+      print(object);
+    }
   }
 }

@@ -245,7 +245,7 @@ class Request {
               .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
               .then((String uid) =>
                   _browseProjects(uid)
-                  .then((_) => _getRolesForUser(uid))
+//                  .then((_) => _getRolesForUser(uid))
               );
           break;
 
@@ -256,15 +256,21 @@ class Request {
               .then((_) => _componentGetAll(inData[DataElements.pid]));
           break;
 
+        case RequestCodes.componentGetRecent:
+          f = _connectToDb()
+              .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
+              .then((String uid) => _userIsObserver(uid, inData[DataElements.pid]))
+              .then((_) => _componentGetRecent(inData[DataElements.pid]));
+          break;
+
         case RequestCodes.componentAdd:
           f = _connectToDb()
               .then((_) => _authenticateUser(inData[DataElements.username], inData[DataElements.password]))
               .then((String uid) =>
                   _userIsContributer(uid, inData[DataElements.pid])
-                  .then((_) => _generateNewUuid(IdentifierTypes.Component))
-                  .then((String newId) =>
+                  .then((_) =>
                       _componentAdd(
-                         newId, // cid
+                         inData[DataElements.cid], // cid
                          inData[DataElements.pid],
                          uid, // uid
                          inData[DataElements.componentType],
@@ -272,7 +278,7 @@ class Request {
                       )
                   )
               )
-              .then((_) => _componentGetAll(inData[DataElements.pid]));
+              .then((_) => _componentGetRecent(inData[DataElements.pid]));
           break;
 
         case RequestCodes.commentGetAll:
@@ -545,36 +551,6 @@ class Request {
     }
   }
 
-  /// Gets all projects readable by [uid] from DB.
-  /// Adds projects to outData.
-  Future _browseProjects(String uid) {
-    // For now, we only want to return pid's that the user can observe.
-    // We'll do this by returning a List<String> of pids.
-    return Future(
-        () =>
-            // Get all public projects
-            // Get all private projects where uid is a developer (owners are considered developers)
-            _db.query(
-                "select distinct p.pid, p.is_public from public.project as p "
-                "inner join public.role as r "
-                "on p.pid = r.pid "
-                "where ( p.is_public or r.uid = @uid )",
-                substitutionValues: {
-                  "uid": uid
-                }
-            ).catchError((e) {
-              if(e is PostgreSQLException) {
-                if(e.columnName == "uid") {
-                  _markOut500Error(ErrorCodes.InvalidInternalUid);
-                }
-              }
-              throw e;
-            })
-    ).then((List<List<dynamic>> data) {
-      _outData[DataElements.projects] = data;
-    });
-  }
-
   Future _getAllRolesForPid(String pid) {
     return
       _db.query(
@@ -590,18 +566,53 @@ class Request {
       });
   }
 
-  Future _getRolesForUser(String uid) {
-    return
-      _db.query(
-          "select r.pid, r.is_owner, r.is_developer from public.role as r "
-          "where r.uid = @uid",
-          substitutionValues: {
-            "uid": uid
-          }
-      ).then((List<List<dynamic>> data) {
-        _outData[DataElements.roles] = data;
-      });
+  /// Gets all projects readable by [uid] from DB.
+  /// Adds projects to outData.
+  /// Adds project name components to outData.
+  Future _browseProjects(String uid) {
+    return Future(
+        () =>
+            // Get all public projects
+            // Get all private projects where uid is a developer (owners are considered developers)
+            _db.query(
+                "select ppg.pid, ppg.is_public, rrg.is_owner, rrg.is_developer, c.data from public.component as c "
+                "inner join ( "
+                "  select max(cc.revision), cc.cid from public.component as cc "
+                "  where cc.type = @nametype group by cc.cid "
+                ") ccg "
+                "on ccg.max = c.revision and ccg.cid = c.cid "
+                "full join ( "
+                "  select distinct pp.pid, pp.is_public from public.project as pp "
+                "  inner join public.role as rr "
+                "  on pp.pid = rr.pid  "
+                "  where ( pp.is_public or rr.uid = @uid ) "
+                ") ppg "
+                "on ppg.pid = c.pid "
+                "left join public.role as rrg "
+                "on rrg.pid = ppg.pid and rrg.uid = @uid "
+                "where ppg.pid is not null",
+                substitutionValues: {
+                  "nametype": 1,
+                  "uid": uid
+                }
+            )
+    ).then((List<List<dynamic>> data) {
+      _outData[DataElements.projectsAndRoles] = data;
+    });
   }
+//
+//  Future _getRolesForUser(String uid) {
+//    return
+//      _db.query(
+//          "select r.pid, r.is_owner, r.is_developer from public.role as r "
+//          "where r.uid = @uid",
+//          substitutionValues: {
+//            "uid": uid
+//          }
+//      ).then((List<List<dynamic>> data) {
+//        _outData[DataElements.roles] = data;
+//      });
+//  }
 
   /// Verifies [uid] has legitimate roles to view [pid] from DB.
   /// Throws error if not allowed.
@@ -686,26 +697,71 @@ class Request {
         _outData[DataElements.components] = data;
       });
   }
+  /*
 
-  /// Inserts component data by [uid] to [pid] of [type] with [data] and new uuid [cid] to DB.
-  /// Throws error if not allowed.
-  Future _componentAdd(String cid, String pid, String uid, int type, String jsonData) {
+  select c.cid, c.revision, c.pid, c.uid, c.date_created, c.type, c.data from public.component as c
+inner join (select max(cc.revision), cc.cid from public.component as cc group by cc.cid) ccg
+on ccg.max = c.revision and ccg.cid = c.cid
+
+   */
+
+  /// Gets all recent components of [pid] from DB.
+  /// Adds components to outData.
+  Future _componentGetRecent(String pid) {
     return
       _db.query(
-          "insert into public.component "
-          "values ( @cid, "
-            "coalesce((select max(c.revision) + 1 from public.component as c "
-            "where c.cid = @cid), 0), "
-          "@pid, @uid, @date_created, @type, @data )",
+          "select c.cid, c.revision, c.pid, c.uid, c.date_created, c.type, c.data from public.component as c "
+          "inner join (select max(cc.revision), cc.cid from public.component as cc where cc.pid = @pid group by cc.cid) ccg "
+          "on ccg.max = c.revision and ccg.cid = c.cid",
           substitutionValues: {
-            "cid": cid,
-            "pid": pid,
-            "uid": uid,
-            "date_created": DateTime.now().toIso8601String(),
-            "type": type,
-            "data": jsonData
+            "pid": pid
           }
-      );
+      ).then((List<List<dynamic>> data) {
+        data.forEach((List<dynamic> row) {
+          row[4] = (row[4] as DateTime).toIso8601String();
+        });
+        _outData[DataElements.components] = data;
+      });
+  }
+
+  /// Inserts component data by [uid] to [pid] of [componentType] with [data] and potential parent [cid] to DB.
+  /// If [cid] doesn't refer to an existing parent component, a new uuid is generated for this component.
+  /// Revision of this component is parent's + 1 or 1 (if no parent).
+  Future _componentAdd(String potentialParentCid, String pid, String uid, int componentType, String jsonData) {
+    int revision;
+    return Future(() =>
+        _db.query(
+            "select max(c.revision) + 1 from public.component as c "
+            "where c.cid = @cid",
+            substitutionValues: {
+              "cid": potentialParentCid
+            }
+        )
+    ).then((List<List<dynamic>> results) {
+      if(results.isEmpty || results.first.isEmpty) {
+        _markOut500Error(ErrorCodes.InvalidDatabaseStructure);
+        throw "No component element found";
+      } else if(results.first.first == null || results.first.first.toString().toLowerCase() == "null") {
+        revision = 1;
+        return _generateNewUuid(IdentifierTypes.Component);
+      } else {
+        revision = results.first.first;
+        return potentialParentCid;
+      }
+    }).then((Object cid) =>
+        _db.query(
+            "insert into public.component "
+            "values ( @cid, @revision, @pid, @uid, @date_created, @type, @data )",
+            substitutionValues: {
+              "cid": cid,
+              "revision": revision,
+              "pid": pid,
+              "uid": uid,
+              "date_created": DateTime.now().toIso8601String(),
+              "type": componentType,
+              "data": jsonData
+          }
+    ));
   }
 
   Future _commentGetAll(String id_target) {
