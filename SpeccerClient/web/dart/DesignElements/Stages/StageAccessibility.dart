@@ -144,4 +144,6 @@ class StageAccessibility extends AbstractStage {
   void receivedSetRoleFailed() {
     _inputGrantUser.setAttribute("error", "true");
   }
+
+  void adjustScrollHeight() {}
 }

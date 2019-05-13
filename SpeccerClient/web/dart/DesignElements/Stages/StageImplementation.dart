@@ -22,4 +22,5 @@ class StageImplementation extends AbstractStage {
     // TODO: implement refreshProject
   }
 
+  void adjustScrollHeight() {}
 }

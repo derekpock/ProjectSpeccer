@@ -291,7 +291,7 @@ class UIManager implements UIManagerInteractionInterface {
       String name;
       if(projInfo[4] != null) {
         Map<String, dynamic> jsonData = jsonDecode(projInfo[4]);
-        name = jsonData["name"];
+        name = jsonData["data"];
       }
       if(name == null || name.isEmpty) {
         name = "[project not named]";

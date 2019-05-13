@@ -16,4 +16,12 @@ class CSSClasses {
 
   static const projectStage = "projectStage";
   static const maskContent = "waitContent";
+
+  static const featurePopulation = "featurePopulation";
+  static const stageCenter = "stageCenter";
+  static const stageDivLeft = "stageDivLeft";
+  static const stageDivRight = "stageDivRight";
+
+  static const listForm = "listForm";
+  static const listFormItem = "listFormItem";
 }

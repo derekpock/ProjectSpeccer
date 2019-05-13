@@ -22,4 +22,5 @@ class StageTesting extends AbstractStage {
     // TODO: implement refreshProject
   }
 
+  void adjustScrollHeight() {}
 }

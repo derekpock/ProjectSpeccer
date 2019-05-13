@@ -15,3 +15,4 @@ dev_dependencies:
   build_web_compilers: ^1.0.0
   pedantic: ^1.0.0
   webdev: '>=0.0.0'
+  uuid: '>=0.0.0'

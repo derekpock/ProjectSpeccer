@@ -7,62 +7,108 @@ import '../AbstractStage.dart';
 import '../../UIManagerInteractionInterface.dart';
 import '../../UIPages/PageProjectInteractionInterface.dart';
 import '../Form.dart';
+import '../../CSSClasses.dart';
+import '../ListForm.dart';
+import '../TextAreaForm.dart';
+import '../TextInputForm.dart';
 
 class StageRequirements extends AbstractStage {
 
-  Form _form;
-  TextInputElement _inputName;
-  TextAreaElement _inputDescription;
-  bool _isOwner;
+  DivElement _divLeft;
+  DivElement _divRight;
+
+  ListForm _features;
+
+  List<TextInputForm> _inputForms;
+  List<TextAreaForm> _areaForms;
+
+  Role _r;
 
   StageRequirements(UIManagerInteractionInterface uimii, PageProjectInteractionInterface ppii) :
         super(uimii, ppii, 1, "Requirements") {
-    _isOwner = false;
 
-    _inputName = new TextInputElement();
-    _inputName.onKeyDown.listen((KeyboardEvent e) {
-      if(e.keyCode == KeyCode.ENTER) {
-        _inputName.blur();
-      }
-    });
-    
-    _inputName.onBlur.listen((_) {
-      ppii.addRevisionWithOneItem(ComponentTypes.ProjectName, "name", _inputName.value);
-      uimii.updatedProject(ppii.getProject().getPid(), ppii.getProject().isPublic(), _inputName.value);
-    });
+    _inputForms = new List();
+    _areaForms = new List();
 
-    _inputDescription = new TextAreaElement();
-    _inputDescription.onKeyDown.listen((KeyboardEvent e) {
-      if(e.keyCode == KeyCode.ENTER) {
-        _inputDescription.blur();
-      }
-    });
+    content.classes.add(CSSClasses.horizontalFlow);
 
-    _inputDescription.onBlur.listen((_) {
-      ppii.addRevisionWithOneItem(ComponentTypes.ProjectDescription, "description", _inputDescription.value);
-    });
+    _divLeft = new DivElement();
+    _divLeft.classes.add(CSSClasses.stageDivLeft);
 
-    _form = new Form();
-    _form.addInputViaString("Project Name", _inputName);
-    _form.addInputViaString("Description", _inputDescription);
+    _divRight = new DivElement();
+    _divRight.classes.add(CSSClasses.stageDivRight);
 
-    content.append(_form.getElement());
+    // TOP
+    _inputForms.add(new TextInputForm("Project Name", ppii, false, componentType: ComponentTypes.ProjectName, defaultValue: "My Project"));
+    _divLeft.append(_inputForms.last.content);
+
+    _inputForms.add(new TextInputForm("Subheading", ppii, false, componentType: ComponentTypes.ProjectSubheading, defaultValue: "A new project."));
+    _divRight.append(_inputForms.last.content);
+
+    // LEFT
+    _areaForms.add(new TextAreaForm("What are we building?", ppii, false, componentType: ComponentTypes.WhatAreWeBuilding));
+    _divLeft.append(_areaForms.last.content);
+
+    _features = new ListForm(ListForm.TextInputType, "Features", ppii, false, componentType: ComponentTypes.Features, useLinkedListAndUuids: true);
+    _divLeft.append(_features.content);
+
+    _areaForms.add(new TextAreaForm("Who do we need on this project?", ppii, false, componentType: ComponentTypes.WhoWeNeed));
+    _divLeft.append(_areaForms.last.content);
+
+    _areaForms.add(new TextAreaForm("What has already been done on this project?", ppii, false, componentType: ComponentTypes.WhatHasBeenDone));
+    _divLeft.append(_areaForms.last.content);
+
+    _areaForms.add(new TextAreaForm("Use Examples - Who is our customer?", ppii, false, componentType: ComponentTypes.ExamplesOfUse));
+    _divLeft.append(_areaForms.last.content);
+
+    // RIGHT
+    _areaForms.add(new TextAreaForm("What is this project not?", ppii, false, componentType: ComponentTypes.WhatAreWeNotBuilding));
+    _divRight.append(_areaForms.last.content);
+
+    _areaForms.add(new TextAreaForm("Examples - What is this project similar to?", ppii, false, componentType: ComponentTypes.ExamplesOfSimilar));
+    _divRight.append(_areaForms.last.content);
+
+    _areaForms.add(new TextAreaForm("What forms of compensation or benefits do contributors get?", ppii, false, componentType: ComponentTypes.CompensationAndBenefits));
+    _divRight.append(_areaForms.last.content);
+
+    _areaForms.add(new TextAreaForm("Links and References - Where is some background on this?", ppii, false, componentType: ComponentTypes.References));
+    _divRight.append(_areaForms.last.content);
+
+    // schedule
+    // _divRight.append(
+
+    content.append(_divLeft);
+    content.append(_divRight);
+
     _setPermissions(null);
   }
 
   void _setPermissions(Role r) {
-    _isOwner = r != null && r.isOwner();
-    _inputName.disabled = !_isOwner;
-    _inputDescription.disabled = !_isOwner;
+    if(r == null) {
+      r = Role("", "", "", false, false);
+    }
+    _r = r;
+
+    _inputForms.forEach((x) => x.setPermissions(r));
+    _areaForms.forEach((x) => x.setPermissions(r));
+    _features.setPermissions(r);
   }
 
   void refreshComponents() {
-    _inputName.value = ppii.getLiveComponent(ComponentTypes.ProjectName).getDataElement("name", "My Project");
-    _inputDescription.value = ppii.getLiveComponent(ComponentTypes.ProjectDescription).getDataElement("description", "A brand new default project.");
+    _inputForms.forEach((x) => x.refreshComponent());
+    _areaForms.forEach((x) => x.refreshComponent());
+    _features.refreshComponent();
+    _features.setPermissions(_r);
   }
 
   void refreshProject(Project p, Role r) {
     _setPermissions(r);
   }
 
+  void adjustScrollHeight() {
+    _features.adjustScrollHeight();
+    _areaForms.forEach((TextAreaForm taf) {
+      taf.adjustScrollHeight();
+    });
+  }
 }

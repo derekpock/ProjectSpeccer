@@ -103,6 +103,10 @@ input[type=range]:active::-webkit-slider-thumb {
     padding: 0 10px;
 }
 
+.listFormItem textarea + .Button {
+    max-height: fit-content;
+}
+
 .Button[toggleButton="selected"],
 .Button[selected="true"] {
     /*background-color: #49c4f4;*/
@@ -215,7 +219,47 @@ input[type=range]:active::-webkit-slider-thumb {
             }
 
             .uiBodyContentPageContent {
+
             }
+
+                .waitContent {
+                    text-align: center;
+                    font-size: large;
+                }
+
+                .projectStage {
+                    background-color: #FF880011;
+                }
+
+                .projectStage > div:first-child {   /* header or clickable title */
+
+                }
+
+                .projectStage > div:last-child {    /* body contents of stage */
+                    background-color: #FF880033;
+                }
+
+                    .stageDivLeft {
+                        flex: 1;
+                        margin: 0 5px 10px 10px;
+                    }
+
+                        .stageDivLeft > div {
+                            margin: 10px 0 0 0;
+                        }
+
+                    .stageDivRight {
+                        flex: 1;
+                        margin: 0 10px 10px 5px;
+                    }
+
+                        .stageDivRight > div {
+                            margin: 10px 0 0 0;
+                        }
+
+                    .stageCenter {
+                        margin: 0 10px 10px 10px;
+                    }
 
 
         #uiBodyPane {
@@ -245,19 +289,33 @@ input[type=range]:active::-webkit-slider-thumb {
     background-color: #FF880022;
 }
 
-.projectStage {
-    background-color: #FF880011;
+.listForm {
+    display: flex;
+    flex-flow: column;
 }
 
-.projectStage div:first-child {
+    .listForm > div:first-child {
+        display: flex;
+        flex-flow: row;
+    }
 
-}
+        .listForm > div:first-child label {
+            flex: 1;
+        }
 
-.projectStage div:last-child {
-    background-color: #FF880033;
-}
+    .listFormItem {
+        display: flex;
+        flex-flow: row;
+        margin: 10px 0;
+    }
 
-.waitContent {
-    text-align: center;
-    font-size: large;
+        .listFormItem input,
+        .listFormItem textarea {
+            margin: 0 10px 0 0;
+            flex: 1;
+        }
+
+.featurePopulation {
+    margin: 0 0 10px 0;
+    background-color: #FF880022;
 }

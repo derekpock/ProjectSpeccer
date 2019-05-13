@@ -183,4 +183,37 @@ class Component {
 class ComponentTypes {
   static const ProjectName = 1;
   static const ProjectDescription = 2;
+  static const SubHeading = 3;
+  static const WhatAreWeBuilding = 4;
+  static const WhatAreWeNotBuilding = 5;
+  static const Features = 6;
+  static const ExamplesOfSimilar = 7;
+  static const WhoWeNeed = 8;
+  static const CompensationAndBenefits = 9;
+  static const WhatHasBeenDone = 10;
+  static const References = 11;
+  static const ExamplesOfUse = 12;
+  static const Schedule = 13;
+
+  static const UseCases = 14;
+  static const Objectives = 15;
+  static const Frameworks = 16;
+  static const ProjectLinks = 17;
+  static const DesignOptions = 18;
+
+  static const DataStructures = 19;
+  static const DatabaseStructures = 20;
+  static const UIFormsViews = 21;
+  static const UIDesigner = 22;
+
+  static const CompletedObjectives = 23;
+  static const CompletedFeatures = 24;
+
+  static const AdditionalTests = 25;
+
+  static const ProjectSubheading = 26;
+  static const Repository = 27;
+  static const IssueTracker = 28;
+  static const UsesDB = 29;
+  static const UsesUI = 30;
 }

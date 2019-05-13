@@ -22,4 +22,5 @@ class StageDistribution extends AbstractStage {
     // TODO: implement refreshProject
   }
 
+  void adjustScrollHeight() {}
 }

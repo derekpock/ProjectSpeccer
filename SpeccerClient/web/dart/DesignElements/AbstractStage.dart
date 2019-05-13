@@ -53,4 +53,6 @@ abstract class AbstractStage {
 
   /// Refresh all data as if it is brand-new.
   void refreshComponents();
+
+  void adjustScrollHeight();
 }

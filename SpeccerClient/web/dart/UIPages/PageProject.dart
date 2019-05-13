@@ -13,9 +13,16 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
   List<AbstractStage> _stages;
   int _activeId = 0;
   int _numOfBlockingEvents = 0;
+  int _watchScrolling;
+  int sx;
+  int sy;
 
   PageProject(UIManagerInteractionInterface uimii) :
         super(uimii, true, true, true, "Project", "project") {
+
+    _watchScrolling = 0;
+    sx = 0;
+    sy = 0;
 
     _stages = new List();
     _stages.addAll([
@@ -45,6 +52,18 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
     _content.append(_waitContent);
     _content.append(_uhohContent);
     _setActiveStageWithoutHistory(_stages.first);
+
+    _element.onScroll.listen((_) {
+      if(_watchScrolling > 0) {
+        _element.scroll(sx, sy);
+        _watchScrolling--;
+      }
+    });
+
+    _element.onMouseWheel.listen((_) {
+      _watchScrolling = 0;
+    });
+
   }
 
   Map<String, String> _saveToUrlData() {
@@ -106,12 +125,15 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
         throw "Refreshing components for a different project!";
       } else {
         _c = c;
+        sx = _element.scrollLeft;
+        sy = _element.scrollTop;
         _stages.forEach((AbstractStage s) => s.refreshComponents());
         if(--_numOfBlockingEvents == 0) {
           _waitContent.classes.toggle(CSSClasses.hidden, true);
           _uhohContent.classes.toggle(CSSClasses.hidden, true);
           _stageContent.classes.toggle(CSSClasses.hidden, false);
         }
+        _watchScrolling = 1;
       }
     }
   }
@@ -145,6 +167,7 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
     _stages.forEach((AbstractStage stage) {
       stage.setContentVisible(stage == activeStage);
     });
+    activeStage.adjustScrollHeight();
   }
 
   Project getProject() {
