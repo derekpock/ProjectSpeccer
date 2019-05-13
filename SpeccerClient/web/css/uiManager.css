@@ -107,6 +107,11 @@ input[type=range]:active::-webkit-slider-thumb {
     max-height: fit-content;
 }
 
+.treeBranch .Button {
+    max-height: fit-content;
+    min-width: fit-content;
+}
+
 .Button[toggleButton="selected"],
 .Button[selected="true"] {
     /*background-color: #49c4f4;*/
@@ -319,3 +324,42 @@ input[type=range]:active::-webkit-slider-thumb {
     margin: 0 0 10px 0;
     background-color: #FF880022;
 }
+
+.treeStructure {
+    padding: 10px 10px 10px 10px;
+}
+
+    .treeStructure > div:first-child > label {
+        margin: 0 10px 0 0;
+    }
+
+    .treeBranch {
+        padding: 10px 0px 0px 20px;
+    }
+
+        .treeBranch > div:first-child {
+
+        }
+
+/*             .treeBranch > div:first-child > * {
+                display: inline-block;
+                width: fit-content;
+            }
+ */
+        .treeBranch > div:first-child > div:first-child {
+            margin: 0 10px 0 0;
+        }
+
+        .treeLeaf {
+            padding: 10px 0px 0px 20px;
+        }
+
+            .treeLeaf > div:first-child {
+                margin: 0 10px 0 0;
+            }
+
+/*             .treeLeaf > * {
+                display: inline-block;
+                width: fit-content !important;
+            }
+ */

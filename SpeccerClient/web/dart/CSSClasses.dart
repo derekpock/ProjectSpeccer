@@ -24,4 +24,8 @@ class CSSClasses {
 
   static const listForm = "listForm";
   static const listFormItem = "listFormItem";
+
+  static const treeStructure = "treeStructure";
+  static const treeBranch = "treeBranch";
+  static const treeLeaf = "treeLeaf";
 }
