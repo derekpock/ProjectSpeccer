@@ -112,21 +112,32 @@ input[type=range]:active::-webkit-slider-thumb {
     min-width: fit-content;
 }
 
-.Button[toggleButton="selected"],
-.Button[selected="true"] {
-    /*background-color: #49c4f4;*/
-    /*color: #2f2f2f;*/
-    cursor: default;
+.Button[selected="false"],
+.Button[selected="false"][disabled="true"] {
+    background-color: #FF330088;
+/*     cursor: default; */
 }
 
-.Button[toggleButton="selected"]:hover,
-.Button[selected="true"]:hover {
-    /*color: #2f2f2f;*/
+.Button[selected="false"]:not([disabled="true"]):hover {
+    background-color: #FF330055;
 }
 
-.Button[toggleButton="selected"]:active,
-.Button[selected="true"]:active {
-    /*color: #2f2f2f;*/
+.Button[selected="false"]:not([disabled="true"]):active {
+    background-color: #FF3300BB;
+}
+
+.Button[selected="true"],
+.Button[selected="true"][disabled="true"] {
+    background-color: #55CC0088;
+/*     cursor: default; */
+}
+
+.Button[selected="true"]:not([disabled="true"]):hover {
+    background-color: #55CC0055;
+}
+
+.Button[selected="true"]:not([disabled="true"]):active {
+    background-color: #55CC00BB;
 }
 
 .ErrorColor {
@@ -237,7 +248,11 @@ input[type=range]:active::-webkit-slider-thumb {
                 }
 
                 .projectStage > div:first-child {   /* header or clickable title */
+                    padding: 4px
+                }
 
+                .projectStage + .projectStage > div:first-child {
+                    border-top: #FF8800FF 1px solid;
                 }
 
                 .projectStage > div:last-child {    /* body contents of stage */
@@ -262,8 +277,8 @@ input[type=range]:active::-webkit-slider-thumb {
                             margin: 10px 0 0 0;
                         }
 
-                    .stageCenter {
-                        margin: 0 10px 10px 10px;
+                    .stageBottom {
+                       padding: 10px 10px 10px 10px;
                     }
 
 
@@ -318,6 +333,22 @@ input[type=range]:active::-webkit-slider-thumb {
         .listFormItem textarea {
             margin: 0 10px 0 0;
             flex: 1;
+        }
+
+.progressForm {
+
+}
+
+    .progressForm > div:first-child {
+        margin: 0 0 10px 0;
+    }
+
+    .progressFormItem {
+        margin: 10px 0 10px 10px;
+    }
+
+        .progressFormItem > div:first-child {
+            margin: 0 10px 0 0;
         }
 
 .featurePopulation {

@@ -18,12 +18,16 @@ class CSSClasses {
   static const maskContent = "waitContent";
 
   static const featurePopulation = "featurePopulation";
-  static const stageCenter = "stageCenter";
+  static const stageBottom = "stageBottom";
   static const stageDivLeft = "stageDivLeft";
   static const stageDivRight = "stageDivRight";
 
   static const listForm = "listForm";
   static const listFormItem = "listFormItem";
+
+
+  static const progressForm = "progressForm";
+  static const progressFormItem = "progressFormItem";
 
   static const treeStructure = "treeStructure";
   static const treeBranch = "treeBranch";

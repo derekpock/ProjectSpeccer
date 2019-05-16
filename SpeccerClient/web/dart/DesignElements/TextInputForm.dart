@@ -33,7 +33,6 @@ class TextInputForm {
       setRemoteComponentValue = (String value) => ppii.addRevisionWithOneItem(componentType, "data", value);
     }
 
-
     header = new LabelElement();
     header.append(new Text(title));
 

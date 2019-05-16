@@ -216,4 +216,5 @@ class ComponentTypes {
   static const IssueTracker = 28;
   static const UsesDB = 29;
   static const UsesUI = 30;
+  static const FeaturesFinished = 31;
 }

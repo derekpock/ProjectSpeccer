@@ -103,7 +103,7 @@ class StageSpecifications extends AbstractStage {
 
     _fpsDiv = new DivElement();
     _fpsDiv.classes.add(CSSClasses.verticalFlow);
-    _fpsDiv.classes.add(CSSClasses.stageCenter);
+    _fpsDiv.classes.add(CSSClasses.stageBottom);
 
       _fpsHead = new LabelElement();
       _fpsHead.append(new Text("Features in Detail"));
@@ -128,8 +128,8 @@ class StageSpecifications extends AbstractStage {
     _div2.append(_divRight2);
     content.append(_div2);
 
-    _objectives = new ListForm(ListForm.TextInputType, "Objectives - Step by steps goals in order to complete our project", ppii, true, componentType: ComponentTypes.Objectives);
-    _objectives.content.classes.add(CSSClasses.stageCenter);
+    _objectives = new ListForm(ListForm.TextInputType, "Objectives - Step by steps goals in order to complete our project", ppii, true, componentType: ComponentTypes.Objectives, useLinkedListAndUuids: true);
+    _objectives.content.classes.add(CSSClasses.stageBottom);
     content.append(_objectives.content);
 
     _setPermissions(null);
