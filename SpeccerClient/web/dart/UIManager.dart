@@ -41,6 +41,8 @@ class UIManager implements UIManagerInteractionInterface {
   DivElement _divUIBodyContent;
   DivElement _divUIBodyPane;
 
+  DivElement _divTopHeaderText;
+
   String _authUsername;
   String _authPass;
   String _uid;
@@ -54,6 +56,7 @@ class UIManager implements UIManagerInteractionInterface {
   bool _contentAdded;
 
   UIManager(DBClient dbClient) {
+    querySelector("#output").classes.add(CSSClasses.hidden);
     _divUI = document.getElementById("ui");
 
     _divUIHeader = new DivElement();
@@ -112,9 +115,18 @@ class UIManager implements UIManagerInteractionInterface {
     _divUIHeader.append(_butMyProjects.getElement());
     _divUIHeader.append(_butLogout.getElement());;
 
-    DivElement headerSpacer = new DivElement();
-    headerSpacer.style.flex = "1";
-    _divUIHeader.append(headerSpacer);
+    DivElement headerSpacer1 = new DivElement();
+    headerSpacer1.style.flex = "1";
+    _divUIHeader.append(headerSpacer1);
+
+    _divTopHeaderText = new DivElement();
+    _divTopHeaderText.append(new Text("Home"));
+    _divTopHeaderText.classes.add(CSSClasses.topHeaderText);
+    _divUIHeader.append(_divTopHeaderText);
+
+    DivElement headerSpacer2 = new DivElement();
+    headerSpacer2.style.flex = "1";
+    _divUIHeader.append(headerSpacer2);
 
     _divUIHeader.append(_butComments.getElement());
 
@@ -174,6 +186,12 @@ class UIManager implements UIManagerInteractionInterface {
         page.hidden = !page.hidden;
       }
     });
+
+    while(_divTopHeaderText.childNodes.isNotEmpty) {
+      _divTopHeaderText.childNodes.last.remove();
+    }
+
+    _divTopHeaderText.append(new Text(activePage.headerText));
   }
 
   void refreshProjectsAndRoles() {
@@ -369,5 +387,13 @@ class UIManager implements UIManagerInteractionInterface {
   void authenticationError() {
     _pageError.setError(PageErrorTypes.NotAuthorized);
     setActivePage(_pageError);
+  }
+
+  void setHeaderText(String text) {
+    while(_divTopHeaderText.childNodes.isNotEmpty) {
+      _divTopHeaderText.childNodes.last.remove();
+    }
+
+    _divTopHeaderText.append(new Text(text));
   }
 }

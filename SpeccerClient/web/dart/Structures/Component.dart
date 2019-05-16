@@ -205,16 +205,19 @@ class ComponentTypes {
   static const DatabaseStructures = 20;
   static const UIFormsViews = 21;
   static const UIDesigner = 22;
+//
+//  static const CompletedObjectives = 23;
+//  static const CompletedFeatures = 24;
 
-  static const CompletedObjectives = 23;
-  static const CompletedFeatures = 24;
-
-  static const AdditionalTests = 25;
+//  static const AdditionalTests = 25;
 
   static const ProjectSubheading = 26;
   static const Repository = 27;
   static const IssueTracker = 28;
   static const UsesDB = 29;
   static const UsesUI = 30;
-  static const FeaturesFinished = 31;
+
+  static const WhereDistributed = 31;
+  static const WhereForums = 32;
+  static const WhereUpdates = 33;
 }

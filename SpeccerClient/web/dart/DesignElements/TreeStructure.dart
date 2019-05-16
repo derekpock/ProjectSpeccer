@@ -234,14 +234,10 @@ class TreeBranch {
 
     if(initialData != null) {
       (initialData as Map<String, dynamic>).forEach((String type, dynamic leafNames) {
-        print("type: ${type}");
         if(type.isNotEmpty) {
           (leafNames as List<dynamic>).forEach((dynamic name) {
-            print("name: ${name}");
             _addLeaf(type, name as String);
           });
-        } else {
-          print("type was empty");
         }
       });
     }

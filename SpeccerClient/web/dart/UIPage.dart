@@ -37,17 +37,16 @@ part 'UIPages/PageError.dart';
 class UIPage {
   UIManagerInteractionInterface _uimii;
 
-  String _headerText;
+  String headerText;
   String _urlId;
   DivElement _element;
 
-  HeadingElement _header;
   DivElement _content;
   bool hidden;
   bool enabled;
   bool _needsProjectSustenance;
 
-  UIPage(UIManagerInteractionInterface uimii, this.hidden, this.enabled, this._needsProjectSustenance, this._headerText, this._urlId) {
+  UIPage(UIManagerInteractionInterface uimii, this.hidden, this.enabled, this._needsProjectSustenance, this.headerText, this._urlId) {
     _uimii = uimii;
 
     _element = new DivElement();
@@ -56,14 +55,9 @@ class UIPage {
       _element.classes.add(CSSClasses.hidden);
     }
 
-    _header = new HeadingElement.h2();
-    _header.setInnerHtml(_headerText);
-    _header.classes.add(CSSClasses.uiBodyContentPageHeader);
-
     _content = new DivElement();
     _content.classes.add(CSSClasses.uiBodyContentPageContent);
 
-    _element.append(_header);
     _element.append(_content);
   }
 

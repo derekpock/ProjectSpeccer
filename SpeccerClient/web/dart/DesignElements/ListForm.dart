@@ -250,43 +250,42 @@ class TextInputListFormItem extends AbstractListFormItem {
 }
 
 class TextAreaListFormItem extends AbstractListFormItem {
-  TextAreaElement input;
+  TextAreaElement textArea;
 
   TextAreaListFormItem(parent, [String initialValue = ""]) : super(parent){
-    input = new TextAreaElement();
-    input.value = initialValue;
+    textArea = new TextAreaElement();
+    textArea.value = initialValue;
 
-    input.onBlur.listen((_) {
+    textArea.onBlur.listen((_) {
       parent.childBlurred();
     });
 
-    input.onInput.listen((_) => adjustScrollHeight());
+    textArea.onInput.listen((_) => adjustScrollHeight());
 
-    content.append(input);
+    content.append(textArea);
     content.append(removeButton);
 
-    input.onResize.listen((_) => print('test'));
     adjustScrollHeight();
   }
 
   void adjustScrollHeight() {
-    input.style.cssText = 'height:auto; padding:0';
+    textArea.style.height = "auto";
+    textArea.style.padding = "0";
     // for box-sizing other than "content-box" use:
     // el.style.cssText = '-moz-box-sizing:content-box';
-    Future(() {
-      input.style.cssText = 'height:${input.scrollHeight}px';
-      if(input.scrollHeight <= 10) {
-        Future(() => adjustScrollHeight);
-      }
-    });
+    textArea.style.height = "${textArea.scrollHeight}px";
+    textArea.style.padding = "";
+    if(textArea.scrollHeight <= 10) {
+      Future(() => adjustScrollHeight);
+    }
   }
 
   void setDisabled(bool disabled) {
-    input.disabled = disabled;
+    textArea.disabled = disabled;
     removeButton.setAttribute("disabled", (disabled ? "true" : "false"));
   }
 
   String getValue() {
-    return input.value;
+    return textArea.value;
   }
 }

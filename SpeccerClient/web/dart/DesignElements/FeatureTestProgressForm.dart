@@ -7,7 +7,7 @@ import '../UIPages/PageProjectInteractionInterface.dart';
 import '../CSSClasses.dart';
 import 'package:uuid/uuid.dart';
 
-class ProgressForm {
+class FeatureTestProgressForm {
   PageProjectInteractionInterface ppii;
   DivElement content;
 
@@ -20,12 +20,9 @@ class ProgressForm {
   Role r;
   bool contributorCanModify;
 
-  String acceptText;
-  String rejectText;
-
-  ProgressForm(String title, this.ppii, this.contributorCanModify, this.componentType, {this.acceptText = "Complete", this.rejectText = "Incomplete"}) {
+  FeatureTestProgressForm(String title, this.ppii, this.contributorCanModify, this.componentType) {
     progressFormItems = new List();
-    progressFormItems.add(new ProgressFormItem(this, "dummy", "false", uuidFrom: "00000000-0000-0000-0000-000000000000", uuidTo: "00000000-0000-0000-0000-000000000000"));
+    progressFormItems.add(new ProgressFormItem(this, "dummy", "dummy", "false", uuidFrom: "00000000-0000-0000-0000-000000000000", uuidTo: "00000000-0000-0000-0000-000000000000"));
 
     headerLabel = new LabelElement();
     headerLabel.append(new Text(title));
@@ -53,10 +50,13 @@ class ProgressForm {
 
     data.forEach((s) {
       s = s as List;
-      progressFormItems.add(new ProgressFormItem(this, s[2], completionData[s[0]], uuidFrom: s[0], uuidTo: s[1]));
-      if(s[0] != "00000000-0000-0000-0000-000000000000") {
-        divItems.append(progressFormItems.last.content);
-      }
+      List<dynamic> useCasesForTest = c.getDataElement("${s[0]}-useCases", new List());
+      useCasesForTest.forEach((u) {
+        progressFormItems.add(new ProgressFormItem(this, "${s[2]} - ${u}", "${s[0]}-${u}", completionData["${s[0]}-${u}"], uuidFrom: s[0], uuidTo: s[1]));
+        if(s[0] != "00000000-0000-0000-0000-000000000000") {
+          divItems.append(progressFormItems.last.content);
+        }
+      });
     });
   }
 
@@ -73,7 +73,7 @@ class ProgressForm {
       Map<String, String> data = new Map();
 
       progressFormItems.forEach((ProgressFormItem item) {
-        data[item.uuidFrom] = item.butToggle.getAttribute("selected");
+        data[item.value] = item.butToggle.getAttribute("selected");
       });
 
       ppii.addRevisionWithOneItem(componentType, "progressData", data);
@@ -86,10 +86,11 @@ class ProgressFormItem {
   String uuidTo;
   DivElement content;
   DivElement butToggle;
-  ProgressForm parent;
+  FeatureTestProgressForm parent;
   DivElement divName;
+  String value;
 
-  ProgressFormItem(this.parent, String value, String selected, {this.uuidFrom, this.uuidTo}) {
+  ProgressFormItem(this.parent, String text, this.value, String selected, {this.uuidFrom, this.uuidTo}) {
     if(selected == null || selected.isEmpty) {
       selected = "false";
     }
@@ -99,18 +100,18 @@ class ProgressFormItem {
     content.classes.add(CSSClasses.horizontalFlow);
 
     divName = new DivElement();
-    divName.append(new Text(value));
+    divName.append(new Text(text));
 
     butToggle = new DivElement();
     butToggle.classes.add(CSSClasses.clickable);
     butToggle.classes.add(CSSClasses.button);
-    butToggle.setInnerHtml(selected == "true" ? parent.acceptText : parent.rejectText);
+    butToggle.setInnerHtml(selected == "true" ? "Passing" : "Failing");
     butToggle.setAttribute("selected", selected);
     butToggle.onClick.listen((_) {
       if(butToggle.getAttribute("disabled") != "true") {
         bool nowEnabled = butToggle.getAttribute("selected") == "false";
         butToggle.setAttribute("selected", nowEnabled ? "true" : "false");
-        butToggle.setInnerHtml(nowEnabled ? parent.acceptText : parent.rejectText);
+        butToggle.setInnerHtml(nowEnabled ? "Passing" : "Failing");
       }
       parent.childBlurred();
     });

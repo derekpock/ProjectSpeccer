@@ -25,6 +25,7 @@ class StageAccessibility extends AbstractStage {
 
   StageAccessibility(UIManagerInteractionInterface uimii, PageProjectInteractionInterface ppii) :
       super(uimii, ppii, 0, "Accessibility") {
+    content.classes.add(CSSClasses.stageBottom);
 
     _form = new Form();
 

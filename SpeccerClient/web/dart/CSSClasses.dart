@@ -32,4 +32,8 @@ class CSSClasses {
   static const treeStructure = "treeStructure";
   static const treeBranch = "treeBranch";
   static const treeLeaf = "treeLeaf";
+
+  static const stageDist = "stageDist";
+
+  static const topHeaderText = "topHeaderText";
 }

@@ -133,6 +133,9 @@ class PageProject extends UIPage implements PageProjectInteractionInterface {
           _uhohContent.classes.toggle(CSSClasses.hidden, true);
           _stageContent.classes.toggle(CSSClasses.hidden, false);
         }
+
+        _uimii.setHeaderText(getLiveComponent(ComponentTypes.ProjectName).getDataElement("data", "Project"));
+
         _watchScrolling = 1;
       }
     }

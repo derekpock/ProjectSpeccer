@@ -30,4 +30,5 @@ abstract class UIManagerInteractionInterface {
 
   void receivedSetRoleFailed();
   void authenticationError();
+  void setHeaderText(String text);
 }

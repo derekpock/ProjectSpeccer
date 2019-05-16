@@ -51,16 +51,15 @@ class TextAreaForm {
   }
 
   void adjustScrollHeight() {
-    textArea.style.cssText = 'height:auto; padding:0';
+    textArea.style.height = "auto";
+    textArea.style.padding = "0";
     // for box-sizing other than "content-box" use:
     // el.style.cssText = '-moz-box-sizing:content-box';
-    Future(() {
-      textArea.style.cssText = 'height:${textArea.scrollHeight}px';
-      if(textArea.scrollHeight <= 10) {
-        print("looping on ${textArea.scrollHeight}");
-        Future(() => adjustScrollHeight);
-      }
-    });
+    textArea.style.height = "${textArea.scrollHeight}px";
+    textArea.style.padding = "";
+    if(textArea.scrollHeight <= 10) {
+      Future(() => adjustScrollHeight);
+    }
   }
 
   void refreshComponent() {

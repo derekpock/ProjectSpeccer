@@ -123,7 +123,7 @@ class StageSpecifications extends AbstractStage {
       _divRight2 = new DivElement();
       _divRight2.classes.add(CSSClasses.stageDivRight);
 
-        _otherUseCases = new ListForm(ListForm.TextAreaType, "Other Use Cases", ppii, true, componentType: ComponentTypes.UseCases);
+        _otherUseCases = new ListForm(ListForm.TextAreaType, "Other Use Cases", ppii, true, componentType: ComponentTypes.UseCases, useLinkedListAndUuids: true);
       _divRight2.append(_otherUseCases.content);
     _div2.append(_divRight2);
     content.append(_div2);
