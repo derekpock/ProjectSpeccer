@@ -128,7 +128,7 @@ class StageSpecifications extends AbstractStage {
     _div2.append(_divRight2);
     content.append(_div2);
 
-    _objectives = new ListForm(ListForm.TextInputType, "Objectives - Step by steps goals in order to complete our project", ppii, true, componentType: ComponentTypes.Objectives, useLinkedListAndUuids: true);
+    _objectives = new ListForm(ListForm.TextInputType, "Objectives - Step by step goals in order to complete our project", ppii, true, componentType: ComponentTypes.Objectives, useLinkedListAndUuids: true);
     _objectives.content.classes.add(CSSClasses.stageBottom);
     content.append(_objectives.content);
 
